@@ -1,18 +1,20 @@
 /**
- * js/charts.js
- * SmartClass — small dependency-free chart module (plain inline SVG,
- * no chart library). Currently draws the "Долоо хоногийн идэвх" bar
- * chart on the dashboard. Load order: after js/data.js, before
- * js/dashboard.js (dashboard.js calls Charts.renderBarChart()).
+ * ============================================================================
+ *  js/charts.js — SmartClass жижиг график модуль
+ * ============================================================================
+ *  Гадны сан (Chart.js гэх мэт) ашиглахгүйгээр, цэвэр SVG-ээр bar chart
+ *  зурна. Одоогоор dashboard.js-ийн "Долоо хоногийн идэвх" панелийг
+ *  зурахад ашиглагдана. Ачаалах дараалал: js/app.js-ийн дараа,
+ *  js/dashboard.js-ээс ӨМНӨ (dashboard.js Charts.renderBarChart()-г дуудна).
+ * ============================================================================
  */
 
 const Charts = {
 
   /**
-   * Renders a simple bar chart into the element with id `containerId`.
-   * @param {string} containerId - target element id
-   * @param {{day:string, value:number}[]} data - value is 0-100
-   * @param {string} [tone] - "forest" | "ocean" | "sun", matches app palette
+   * @param {string} containerId - зураг байрлах элементийн id
+   * @param {{day:string, value:number}[]} data - value 0-100 хооронд
+   * @param {string} [tone] - "forest" | "ocean" | "sun" — app.js-ийн TONE-той таарна
    */
   renderBarChart(containerId, data, tone = "ocean") {
     const el = document.getElementById(containerId);

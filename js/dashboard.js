@@ -1,82 +1,22 @@
 /**
- * js/dashboard.js
- * SmartClass — core dashboard logic: state, rendering, view/role
- * switching, and all UI event bindings. Reads SMARTCLASS_DATA (data.js)
- * and calls Charts.renderBarChart (charts.js). Load order: after
- * supabase.js, auth.js, data.js and charts.js — see index.html.
+ * ============================================================================
+ *  js/dashboard.js — SmartClass DASHBOARD хуудасны логик
+ * ============================================================================
+ *  Зөвхөн dashboard.html дээр ачаална. Энэ файл js/app.js-д тодорхойлсон
+ *  `state`, `SMARTCLASS_DATA`, `ICONS`, `TONE`, `escapeHTML`, `DB`-г
+ *  ашигладаг тул АЧААЛАХ ДАРААЛАЛ чухал:
+ *    supabase.js → auth.js → app.js → charts.js → dashboard.js
+ *
+ *  Доор 4 логик бүлэгт хуваасан:
+ *    1) RENDERERS          — өгөгдлийг дэлгэц дээр буулгах функцүүд
+ *    2) VIEW / ROLE SWITCH  — хуудас хооронд шилжих, Сурагч/Багш горим
+ *    3) INTERACTIONS        — товч дарах, форм илгээх зэрэг event-үүд
+ *    4) INIT                 — хуудас ачаалахад ажиллах эхлэл цэг
+ * ============================================================================
  */
-
-const state = {
-  role: "student",
-  activeView: "dashboard",
-  libraryFilters: { subject: "all", grade: "all", type: "all", q: "" },
-  activePlaylist: "All",
-  selectedSubmissionId: null,
-  submissions: SMARTCLASS_DATA.submissions.map((s) => ({ ...s })),
-  assignments: SMARTCLASS_DATA.assignments.map((a) => ({ ...a })),
-};
-
-const ICONS = {
-  book: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>',
-  clock: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
-  download: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>',
-  trend: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
-  upload: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>',
-  grade: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
-  video: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="14" height="14" rx="3"/><path d="m21.5 8.5-5 3 5 3v-6Z"/></svg>',
-  comment: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-5.3A8.4 8.4 0 1 1 21 11.5Z"/></svg>',
-  play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7-11-7Z"/></svg>',
-  pdf: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg>',
-};
-
-const TONE = {
-  forest: { bg: "var(--forest-100)", ink: "var(--forest-700)", solid: "linear-gradient(135deg, var(--forest-600), var(--forest-900))" },
-  ocean:  { bg: "var(--ocean-100)",  ink: "var(--ocean-700)",  solid: "linear-gradient(135deg, var(--ocean-500), var(--ocean-700))" },
-  sun:    { bg: "var(--sun-100)",    ink: "var(--sun-600)",    solid: "linear-gradient(135deg, var(--sun-500), var(--sun-600))" },
-};
-
-function escapeHTML(str) {
-  if (!str) return "";
-  return String(str).replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[m]));
-}
-
-/**
- * Data-access layer. Swap the bodies for real Supabase queries once
- * your project is connected (see js/supabase.js) — the render layer
- * above doesn't need to change either way.
- */
-const DB = {
-  async fetchLibrary() {
-    // const { data, error } = await supabaseClient.from('library_items').select('*');
-    // if (error) throw error;
-    // return data;
-    return SMARTCLASS_DATA.library;
-  },
-  async fetchVideos() {
-    // const { data, error } = await supabaseClient.from('videos').select('*');
-    // if (error) throw error;
-    // return data;
-    return SMARTCLASS_DATA.videos;
-  },
-  async uploadLibraryItem(payload) {
-    // const { error } = await supabaseClient.from('library_items').insert(payload);
-    // if (error) throw error;
-    console.log("[SmartClass] library_items.insert ->", payload);
-    return { ok: true };
-  },
-  async saveGrade(submissionId, grade, feedback) {
-    // const { error } = await supabaseClient.from('submissions')
-    //   .update({ grade, feedback, status: 'graded' }).eq('id', submissionId);
-    // if (error) throw error;
-    console.log("[SmartClass] submissions.update ->", { submissionId, grade, feedback });
-    return { ok: true };
-  },
-};
 
 /* ============================================================
-   RENDERERS
+   1) RENDERERS
    ============================================================ */
 function renderStats() {
   const grid = document.getElementById("statGrid");
@@ -116,8 +56,7 @@ function renderUpNext() {
     </li>`).join("");
 }
 
-/** Draws the weekly-activity bar chart via js/charts.js, using the
-    palette tone that matches the current role. */
+/** "Долоо хоногийн идэвх" bar chart-ыг js/charts.js ашиглан зурна. */
 function renderWeeklyChart() {
   const data = SMARTCLASS_DATA.weeklyActivity[state.role] || SMARTCLASS_DATA.weeklyActivity.student;
   const tone = state.role === "teacher" ? "forest" : "ocean";
@@ -201,7 +140,7 @@ function renderVideos() {
   }).join("");
 }
 
-/* ---- Assignments: student kanban ---- */
+/* ---- Даалгавар: сурагчийн kanban ---- */
 function renderKanban() {
   const cols = { todo: [], progress: [], done: [] };
   state.assignments.forEach((a) => cols[a.status]?.push(a));
@@ -231,7 +170,7 @@ function renderKanban() {
   });
 }
 
-/* ---- Assignments: teacher grading queue ---- */
+/* ---- Даалгавар: багшийн дүгнэх жагсаалт ---- */
 function renderSubmissions() {
   const list = document.getElementById("submissionList");
   if (!list) return;
@@ -272,7 +211,7 @@ function renderGradingPanel() {
 }
 
 /* ============================================================
-   VIEW / ROLE SWITCHING
+   2) VIEW / ROLE SWITCHING
    ============================================================ */
 function setView(view) {
   state.activeView = view;
@@ -320,6 +259,9 @@ function applyRole() {
   renderWeeklyChart();
 }
 
+/* ============================================================
+   3) INTERACTIONS
+   ============================================================ */
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -498,7 +440,7 @@ function bindEvents() {
 }
 
 /* ============================================================
-   INIT
+   4) INIT
    ============================================================ */
 function init() {
   document.getElementById("greetName").textContent = SMARTCLASS_DATA.user.name;
@@ -509,7 +451,7 @@ function init() {
   renderUpNext();
   renderPlaylistChips();
   bindEvents();
-  applyRole(); // also draws the weekly chart via renderWeeklyChart()
+  applyRole(); // renderWeeklyChart()-г бас дуудна
   setView("dashboard");
 }
 

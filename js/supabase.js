@@ -1,14 +1,14 @@
 /**
- * js/supabase.js
- * SmartClass — Supabase client.
+ * ============================================================================
+ *  js/supabase.js — Supabase client
+ * ============================================================================
+ *  Хамгийн эхэнд ачаалагдах ёстой файл (Supabase SDK CDN-ийн дараа).
+ *  Бусад бүх js файл (auth.js, app.js, dashboard.js) `supabaseClient`
+ *  глобал хувьсагчийг эндээс ашиглана.
  *
- * IMPORTANT: this file must load AFTER the Supabase JS CDN script tag
- * and BEFORE every other SmartClass script (auth.js, data.js, charts.js,
- * dashboard.js). It exposes a single global: `supabaseClient`.
- *
- * Get these two values from your Supabase project:
- *   Project Settings → API → Project URL / anon public key
- * Never put your service_role key in frontend code — anon key only.
+ *  Утгуудаа Supabase project → Settings → API хэсгээс аваарай.
+ *  ⚠️ service_role key-г ХЭЗЭЭ Ч frontend кодонд бичихгүй — зөвхөн anon key.
+ * ============================================================================
  */
 
 const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
@@ -16,10 +16,15 @@ const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
 
 if (!window.supabase) {
   console.error(
-    "[SmartClass] Supabase JS SDK олдсонгүй. index.html дотор https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2 -г js/supabase.js -ээс өмнө холбосон эсэхийг шалгана уу."
+    "[SmartClass] Supabase JS SDK олдсонгүй. HTML файл дотор " +
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2 -г js/supabase.js -ээс " +
+    "ӨМНӨ холбосон эсэхээ шалгана уу."
   );
 }
 
 const supabaseClient = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
+
+/** true бол та бодит Supabase түлхүүрүүдээ хараахан оруулаагүй байна гэсэн үг. */
+const IS_SUPABASE_CONFIGURED = SUPABASE_URL.indexOf("YOUR-PROJECT-REF") === -1;

@@ -1,13 +1,35 @@
+/**
+ * ============================================================================
+ *  js/app.js — SmartClass CORE LAYER
+ * ============================================================================
+ *  Энэ файл нь бусад бүх скриптийн СУУРЬ давхарга. Дараах зүйлсийг агуулна:
+ *    1) STATE        — апп даяар хуваалцах төлөв (role, view, filters гэх мэт)
+ *    2) CONSTANTS     — icon SVG-үүд, өнгөний токенууд
+ *    3) MOCK DATA     — SMARTCLASS_DATA (жинхэнэ Supabase холбогдох хүртэлх жишиг өгөгдөл)
+ *    4) HELPERS       — escapeHTML, DB (өгөгдөл татах/хадгалах давхарга)
+ *
+ *  Ачаалах дараалал: js/supabase.js, js/auth.js -ын дараа,
+ *  js/charts.js болон js/dashboard.js -ээс ӨМНӨ ачаална (dashboard.html дээр).
+ *  index.html (нэвтрэх хуудас) энэ файлыг ачаалахгүй — зөвхөн dashboard.html-д хэрэгтэй.
+ * ============================================================================
+ */
+
+/* ----------------------------------------------------------------------
+   1) STATE — dashboard.js-ийн render функцүүд эндээс уншиж/бичнэ
+   ---------------------------------------------------------------------- */
 const state = {
-  role: "student",
-  activeView: "dashboard",
+  role: "student",              // "student" | "teacher"
+  activeView: "dashboard",      // dashboard | library | videos | assignments
   libraryFilters: { subject: "all", grade: "all", type: "all", q: "" },
   activePlaylist: "All",
   selectedSubmissionId: null,
-  submissions: EDU_DATA.submissions.map((s) => ({ ...s })),
-  assignments: EDU_DATA.assignments.map((a) => ({ ...a })),
+  submissions: [],
+  assignments: [],
 };
 
+/* ----------------------------------------------------------------------
+   2) CONSTANTS — inline SVG иконууд болон өнгөний токенууд
+   ---------------------------------------------------------------------- */
 const ICONS = {
   book: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>',
   clock: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
@@ -27,6 +49,109 @@ const TONE = {
   sun:    { bg: "var(--sun-100)",    ink: "var(--sun-600)",    solid: "linear-gradient(135deg, var(--sun-500), var(--sun-600))" },
 };
 
+/* ----------------------------------------------------------------------
+   3) MOCK DATA — SMARTCLASS_DATA
+   Жинхэнэ Supabase хүснэгттэй холбогдоход DB.fetch* функцүүдийн дотоод
+   хэрэгжилтийг л сольж өгнө, доорх өгөгдлийн бүтцийг ӨӨРЧЛӨХГҮЙгээр.
+   ---------------------------------------------------------------------- */
+const SMARTCLASS_DATA = {
+
+  user: {
+    name: "Mönkhbat",
+    initials: "MB",
+  },
+
+  stats: {
+    student: [
+      { id: "courses", label: "Идэвхтэй хичээлүүд", value: 6, delta: "+1 энэ улиралд", tone: "forest", icon: "book" },
+      { id: "pending", label: "Хийгдээгүй даалгавар", value: 4, delta: "Энэ долоо хоногт 2 дуусна", tone: "sun", icon: "clock" },
+      { id: "materials", label: "Хадгалсан материал", value: 18, delta: "+3 энэ долоо хоногт", tone: "ocean", icon: "download" },
+      { id: "avg", label: "Дундаж дүн", value: "91%", delta: "Өнгөрсөн улиралтай харьцуулахад +4%", tone: "forest", icon: "trend" },
+    ],
+    teacher: [
+      { id: "courses", label: "Идэвхтэй хичээлүүд", value: 3, delta: "Нийт 128 сурагч", tone: "forest", icon: "book" },
+      { id: "pending", label: "Дүгнэх ажил", value: 12, delta: "5 хугацаа хэтэрсэн", tone: "sun", icon: "clock" },
+      { id: "materials", label: "Байршуулсан материал", value: 27, delta: "+2 энэ долоо хоногт", tone: "ocean", icon: "download" },
+      { id: "avg", label: "Ангийн дундаж", value: "87%", delta: "Өнгөрсөн сартай харьцуулахад +2%", tone: "forest", icon: "trend" },
+    ],
+  },
+
+  /* js/charts.js-ийн Charts.renderBarChart()-д зориулсан 7 хоногийн жишиг өгөгдөл */
+  weeklyActivity: {
+    student: [
+      { day: "Да", value: 40 }, { day: "Мя", value: 65 }, { day: "Лх", value: 50 },
+      { day: "Пү", value: 80 }, { day: "Ба", value: 30 }, { day: "Бя", value: 20 }, { day: "Ня", value: 10 },
+    ],
+    teacher: [
+      { day: "Да", value: 55 }, { day: "Мя", value: 70 }, { day: "Лх", value: 60 },
+      { day: "Пү", value: 90 }, { day: "Ба", value: 45 }, { day: "Бя", value: 25 }, { day: "Ня", value: 15 },
+    ],
+  },
+
+  activity: [
+    { icon: "upload", title: "Шинэ материал нэмэгдлээ", detail: "«Эсийн биологи — 4-р бүлэг» Байгалийн ухаан хичээлд нэмэгдлээ.", time: "2 цагийн өмнө" },
+    { icon: "grade", title: "Даалгавар дүгнэгдлээ", detail: "Алгебр II — 4-р шалгалт 92/100 дүн авлаа.", time: "5 цагийн өмнө" },
+    { icon: "video", title: "Видео хичээл нийтлэгдлээ", detail: "«Ньютоны хуулиуд, 2-р хэсэг» одоо үзэх боломжтой боллоо.", time: "Өчигдөр" },
+    { icon: "comment", title: "Санал хүсэлт ирлээ", detail: "Багш Оюунаа таны эссений нооргонд санал үлдээлээ.", time: "2 өдрийн өмнө" },
+  ],
+
+  upNext: [
+    { date: "08/18", title: "Дэлхийн түүхийн эссений хугацаа", detail: "Ноорог хувилбар • 500 үг" },
+    { date: "08/20", title: "Шууд хичээл: Органик хими", detail: "10:00 — B танхим / Онлайн" },
+    { date: "08/22", title: "Алгебр II — 5-р шалгалт", detail: "6–7-р бүлгийг хамарна" },
+  ],
+
+  subjects: ["Математик", "Байгалийн ухаан", "Уран зохиол", "Түүх", "Хэл шинжлэл"],
+  grades: ["7-р анги", "8-р анги", "9-р анги", "10-р анги", "11-р анги", "12-р анги"],
+
+  library: [
+    { id: "l1", title: "Алгебрийн үндэс", subject: "Математик", grade: "9-р анги", type: "PDF", size: "4.2 MB", tone: "forest" },
+    { id: "l2", title: "Эсийн биологи — 4-р бүлэг", subject: "Байгалийн ухаан", grade: "10-р анги", type: "PDF", size: "6.8 MB", tone: "ocean" },
+    { id: "l3", title: "Шүлгийн түүвэр", subject: "Уран зохиол", grade: "8-р анги", type: "EPUB", size: "1.9 MB", tone: "sun" },
+    { id: "l4", title: "Дэлхийн түүх: XX зуун", subject: "Түүх", grade: "11-р анги", type: "PDF", size: "9.1 MB", tone: "forest" },
+    { id: "l5", title: "Монгол хэлний дасгалын дэвтэр", subject: "Хэл шинжлэл", grade: "7-р анги", type: "PDF", size: "3.3 MB", tone: "ocean" },
+    { id: "l6", title: "Органик химийн тэмдэглэл", subject: "Байгалийн ухаан", grade: "12-р анги", type: "PDF", size: "5.5 MB", tone: "sun" },
+    { id: "l7", title: "Геометрийн дасгал", subject: "Математик", grade: "8-р анги", type: "PDF", size: "2.4 MB", tone: "forest" },
+    { id: "l8", title: "Сонгодог өгүүллэгүүд", subject: "Уран зохиол", grade: "9-р анги", type: "EPUB", size: "2.1 MB", tone: "ocean" },
+  ],
+
+  playlists: ["All", "Математик", "Байгалийн ухаан", "Түүх"],
+
+  videos: [
+    { id: "v1", title: "Ньютоны хуулиуд, 2-р хэсэг", teacher: "B. Erdene", duration: "18:42", playlist: "Байгалийн ухаан", progress: 65, tone: "ocean" },
+    { id: "v2", title: "Квадрат тэгшитгэл тайлбарлав", teacher: "T. Naran", duration: "22:10", playlist: "Математик", progress: 100, tone: "forest" },
+    { id: "v3", title: "Францын хувьсгал", teacher: "S. Oyunaa", duration: "27:05", playlist: "Түүх", progress: 0, tone: "sun" },
+    { id: "v4", title: "Эсийн хуваагдал ба митоз", teacher: "B. Erdene", duration: "15:30", playlist: "Байгалийн ухаан", progress: 30, tone: "ocean" },
+    { id: "v5", title: "Тригонометрийн танилцуулга", teacher: "T. Naran", duration: "20:12", playlist: "Математик", progress: 0, tone: "forest" },
+    { id: "v6", title: "Хүйтэн дайны эх үүсвэр", teacher: "S. Oyunaa", duration: "24:48", playlist: "Түүх", progress: 80, tone: "sun" },
+  ],
+
+  assignments: [
+    { id: "a1", subject: "Математик", title: "Алгебр II — 5-р шалгалт", due: "8-р сарын 22", status: "todo", student: "Mönkhbat" },
+    { id: "a2", subject: "Түүх", title: "Дэлхийн түүхийн эссений ноорог", due: "8-р сарын 18", status: "todo", student: "Mönkhbat" },
+    { id: "a3", subject: "Байгалийн ухаан", title: "Лабораторийн тайлан: Фотосинтез", due: "8-р сарын 16", status: "progress", student: "Mönkhbat" },
+    { id: "a4", subject: "Хэл шинжлэл", title: "Үгсийн сан 12", due: "8-р сарын 14", status: "progress", student: "Mönkhbat" },
+    { id: "a5", subject: "Математик", title: "Алгебр II — 4-р шалгалт", due: "8-р сарын 10", status: "done", grade: 92, student: "Mönkhbat" },
+    { id: "a6", subject: "Уран зохиол", title: "Шүлгийн шинжилгээ", due: "8-р сарын 6", status: "done", grade: 88, student: "Mönkhbat" },
+  ],
+
+  submissions: [
+    { id: "s1", student: "Mönkhbat", initials: "MB", subject: "Байгалийн ухаан", title: "Лабораторийн тайлан: Фотосинтез", submitted: "8-р сарын 15", status: "pending", text: "Фотосинтез нь гэрлийн энергийг глюкоз хэлбэрээр хадгалагдах химийн энерги болгон хувиргадаг. Энэ туршилтад бид Элодеагийн хүчилтөрөгчийн ялгаралтыг өөр өөр гэрлийн эрчимд хэмжсэн..." },
+    { id: "s2", student: "Anujin", initials: "AN", subject: "Математик", title: "Алгебр II — 5-р шалгалт", submitted: "8-р сарын 15", status: "pending", text: "1) x = 4, -3  2) Дискриминант = 25, хоёр бодит язгуур  3) Оройн хэлбэр: y = (x-2)² + 1 ..." },
+    { id: "s3", student: "Bilguun", initials: "BL", subject: "Түүх", title: "Дэлхийн түүхийн эссений ноорог", submitted: "8-р сарын 14", status: "pending", text: "Хүйтэн дайны эх үүсвэрийг Дэлхийн 2-р дайны дараа АНУ, ЗХУ хоёрын үзэл суртлын зөрүүнээс хайж болно..." },
+    { id: "s4", student: "Sarnai", initials: "SR", subject: "Байгалийн ухаан", title: "Лабораторийн тайлан: Фотосинтез", submitted: "8-р сарын 13", status: "graded", grade: 95, feedback: "Маш сайн шинжилгээ, цэвэрхэн өгөгдлийн хүснэгттэй байна.", text: "Манай таамаглал бол гэрлийн эрчим нэмэгдэхэд хүчилтөрөгчийн ялгаралтын хурд нэмэгдэнэ гэсэн байсан..." },
+  ],
+};
+
+// Хуулбарласан ажлын хувиар state-ийн массивуудыг дүүргэнэ (эх өгөгдлийг хамгаална)
+state.submissions = SMARTCLASS_DATA.submissions.map((s) => ({ ...s }));
+state.assignments = SMARTCLASS_DATA.assignments.map((a) => ({ ...a }));
+
+/* ----------------------------------------------------------------------
+   4) HELPERS
+   ---------------------------------------------------------------------- */
+
+/** HTML-руу шууд оруулахаас өмнө текстийг аюулгүй болгоно (XSS хамгаалалт). */
 function escapeHTML(str) {
   if (!str) return "";
   return String(str).replace(/[&<>"']/g, (m) => ({
@@ -34,438 +159,36 @@ function escapeHTML(str) {
   }[m]));
 }
 
+/**
+ * DB — өгөгдөл татах/хадгалах давхарга.
+ * Одоогоор SMARTCLASS_DATA-с уншиж, консол руу log хийж байгаа боловч
+ * Supabase төслөө холбоход ЗӨВХӨН эндэх функцүүдийн БИЕИЙГ л сольж
+ * өгнө — dashboard.js-ийг өөрчлөх шаардлагагүй.
+ */
 const DB = {
-  async fetchLibrary() { return EDU_DATA.library; },
-  async fetchVideos() { return EDU_DATA.videos; },
+  async fetchLibrary() {
+    // const { data, error } = await supabaseClient.from('library_items').select('*');
+    // if (error) throw error;
+    // return data;
+    return SMARTCLASS_DATA.library;
+  },
+  async fetchVideos() {
+    // const { data, error } = await supabaseClient.from('videos').select('*');
+    // if (error) throw error;
+    // return data;
+    return SMARTCLASS_DATA.videos;
+  },
   async uploadLibraryItem(payload) {
-    console.log("[supabase.storage.upload -> library_items.insert]", payload);
+    // const { error } = await supabaseClient.from('library_items').insert(payload);
+    // if (error) throw error;
+    console.log("[SmartClass] library_items.insert ->", payload);
     return { ok: true };
   },
   async saveGrade(submissionId, grade, feedback) {
-    console.log("[supabase.from('submissions').update]", { submissionId, grade, feedback });
+    // const { error } = await supabaseClient.from('submissions')
+    //   .update({ grade, feedback, status: 'graded' }).eq('id', submissionId);
+    // if (error) throw error;
+    console.log("[SmartClass] submissions.update ->", { submissionId, grade, feedback });
     return { ok: true };
   },
 };
-
-function renderStats() {
-  const grid = document.getElementById("statGrid");
-  const items = EDU_DATA.stats[state.role] || [];
-  grid.innerHTML = items.map((s) => {
-    const t = TONE[s.tone] || TONE.ocean;
-    return `
-      <div class="stat-card" style="--tint:${t.bg}; --tint-ink:${t.ink}">
-        <div class="stat-card__icon">${ICONS[s.icon] || ICONS.book}</div>
-        <div class="stat-card__value">${escapeHTML(s.value)}</div>
-        <div class="stat-card__label">${escapeHTML(s.label)}</div>
-        <span class="stat-card__delta stat-card__delta--${s.tone === "sun" ? "warn" : "up"}">${escapeHTML(s.delta)}</span>
-      </div>`;
-  }).join("");
-}
-
-function renderActivity() {
-  document.getElementById("activityFeed").innerHTML = EDU_DATA.activity.map((a) => `
-    <li>
-      <span class="activity-feed__icon">${ICONS[a.icon] || ICONS.comment}</span>
-      <div class="activity-feed__body">
-        <strong>${escapeHTML(a.title)}</strong>
-        <p>${escapeHTML(a.detail)}</p>
-      </div>
-      <span class="activity-feed__time">${escapeHTML(a.time)}</span>
-    </li>`).join("");
-}
-
-function renderUpNext() {
-  document.getElementById("upNextList").innerHTML = EDU_DATA.upNext.map((u) => `
-    <li>
-      <span class="upnext-list__date">${escapeHTML(u.date)}</span>
-      <div>
-        <strong>${escapeHTML(u.title)}</strong>
-        <p>${escapeHTML(u.detail)}</p>
-      </div>
-    </li>`).join("");
-}
-
-function populateLibraryFilters() {
-  const subjectSel = document.getElementById("filterSubject");
-  const gradeSel = document.getElementById("filterGrade");
-  const typeSel = document.getElementById("filterType");
-  EDU_DATA.subjects.forEach((s) => subjectSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`));
-  EDU_DATA.grades.forEach((g) => gradeSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`));
-  ["PDF", "EPUB"].forEach((t) => typeSel.insertAdjacentHTML("beforeend", `<option value="${t}">${t}</option>`));
-}
-
-function renderLibrary() {
-  const { subject, grade, type, q } = state.libraryFilters;
-  const items = EDU_DATA.library.filter((item) => {
-    if (subject !== "all" && item.subject !== subject) return false;
-    if (grade !== "all" && item.grade !== grade) return false;
-    if (type !== "all" && item.type !== type) return false;
-    if (q && !item.title.toLowerCase().includes(q.toLowerCase())) return false;
-    return true;
-  });
-
-  document.getElementById("libCount").textContent = items.length;
-
-  const grid = document.getElementById("libraryGrid");
-  if (items.length === 0) {
-    grid.innerHTML = `<p style="color:var(--ink-500); grid-column:1/-1;">Эдгээр шүүлтүүрт тохирох материал одоогоор алга байна.</p>`;
-    return;
-  }
-
-  grid.innerHTML = items.map((b) => {
-    const t = TONE[b.tone] || TONE.ocean;
-    const actions = state.role === "teacher"
-      ? `<button class="btn btn--ghost btn--sm" style="flex:1">Засах</button><button class="btn btn--ghost btn--sm" style="flex:1">Устгах</button>`
-      : `<button class="btn btn--primary btn--sm" style="flex:1">Татах</button><button class="btn btn--ghost btn--sm" style="flex:1">Урьдчилан үзэх</button>`;
-    return `
-      <article class="book-card">
-        <div class="book-card__cover" style="background:${t.solid}">
-          ${ICONS.pdf}
-          <span class="book-card__type">${escapeHTML(b.type)}</span>
-        </div>
-        <div class="book-card__body">
-          <span class="book-card__subject">${escapeHTML(b.subject)} · ${escapeHTML(b.grade)}</span>
-          <h3 class="book-card__title">${escapeHTML(b.title)}</h3>
-          <span class="book-card__meta">${escapeHTML(b.size)}</span>
-        </div>
-        <div class="book-card__actions">${actions}</div>
-      </article>`;
-  }).join("");
-}
-
-function renderPlaylistChips() {
-  const row = document.getElementById("playlistChips");
-  row.innerHTML = EDU_DATA.playlists.map((p) =>
-    `<button class="chip ${p === state.activePlaylist ? "is-active" : ""}" data-playlist="${escapeHTML(p)}" type="button">${escapeHTML(p)}</button>`
-  ).join("");
-}
-
-function renderVideos() {
-  const items = EDU_DATA.videos.filter((v) => state.activePlaylist === "All" || v.playlist === state.activePlaylist);
-  const grid = document.getElementById("videoGrid");
-  grid.innerHTML = items.map((v) => {
-    const t = TONE[v.tone] || TONE.ocean;
-    return `
-      <article class="video-card">
-        <div class="video-card__thumb" style="background:${t.solid}">
-          <span class="video-card__play">${ICONS.play}</span>
-          <span class="video-card__duration">${escapeHTML(v.duration)}</span>
-        </div>
-        <div class="video-card__body">
-          <h3 class="video-card__title">${escapeHTML(v.title)}</h3>
-          <p class="video-card__teacher">${escapeHTML(v.teacher)} · ${escapeHTML(v.playlist)}</p>
-          ${state.role === "student" ? `
-            <div class="progress-track"><div class="progress-track__fill" style="width:${v.progress}%; background:${t.ink}"></div></div>
-          ` : ""}
-        </div>
-      </article>`;
-  }).join("");
-}
-
-/* ---- Assignments: student kanban ---- */
-function renderKanban() {
-  const cols = { todo: [], progress: [], done: [] };
-  state.assignments.forEach((a) => cols[a.status]?.push(a));
-
-  Object.entries(cols).forEach(([status, tasks]) => {
-    const el = document.getElementById(`col-${status}`);
-    if (!el) return;
-    if (!tasks.length) {
-      el.innerHTML = `<p style="color:var(--ink-300); font-size:0.8rem;">Энд одоогоор юу ч алга.</p>`;
-      return;
-    }
-    el.innerHTML = tasks.map((a) => `
-      <div class="task-card" data-task="${escapeHTML(a.id)}">
-        <span class="task-card__subject">${escapeHTML(a.subject)}</span>
-        <div class="task-card__title">${escapeHTML(a.title)}</div>
-        ${a.status === "done"
-          ? `<span class="task-card__grade">${escapeHTML(a.grade)}/100</span>`
-          : `<div class="task-card__due">Хугацаа: ${escapeHTML(a.due)}</div>
-             <button class="btn btn--ghost btn--sm task-card__btn" data-toggle-submit="${escapeHTML(a.id)}">Даалгавар илгээх</button>
-             <div class="submit-panel" id="submit-${escapeHTML(a.id)}">
-               <div class="mini-drop">Файл хавсаргахын тулд дарах эсвэл чирж оруулна уу</div>
-               <textarea class="mini-textarea" rows="2" placeholder="Бичгэн хариулт нэмэх (заавал биш)"></textarea>
-               <button class="btn btn--primary btn--sm" style="margin-top:8px; width:100%" data-submit-task="${escapeHTML(a.id)}">Илгээх</button>
-             </div>`
-        }
-      </div>`).join("");
-  });
-}
-
-/* ---- Assignments: teacher grading queue ---- */
-function renderSubmissions() {
-  const list = document.getElementById("submissionList");
-  if (!list) return;
-  list.innerHTML = state.submissions.map((s) => `
-    <button class="submission-row ${s.id === state.selectedSubmissionId ? "is-selected" : ""}" data-submission="${escapeHTML(s.id)}" type="button">
-      <span class="avatar avatar--sm">${escapeHTML(s.initials)}</span>
-      <span class="submission-row__body">
-        <strong>${escapeHTML(s.student)} · ${escapeHTML(s.title)}</strong>
-        <p>${escapeHTML(s.subject)} · илгээсэн ${escapeHTML(s.submitted)}</p>
-      </span>
-      <span class="status-pill status-pill--${s.status === "graded" ? "graded" : "pending"}">
-        ${s.status === "graded" ? escapeHTML(s.grade) + "/100" : "Хүлээгдэж буй"}
-      </span>
-    </button>`).join("");
-
-  renderGradingPanel();
-}
-
-function renderGradingPanel() {
-  const empty = document.getElementById("gradingEmpty");
-  const form = document.getElementById("gradingForm");
-  const sub = state.submissions.find((s) => s.id === state.selectedSubmissionId);
-
-  if (!sub) {
-    if (empty) empty.hidden = false;
-    if (form) form.hidden = true;
-    return;
-  }
-  if (empty) empty.hidden = true;
-  if (form) form.hidden = false;
-
-  document.getElementById("gradeAvatar").textContent = sub.initials;
-  document.getElementById("gradeStudentName").textContent = sub.student;
-  document.getElementById("gradeAssignmentName").textContent = `${sub.subject} · ${sub.title}`;
-  document.getElementById("gradeSubmissionText").textContent = sub.text;
-  document.getElementById("gradeScore").value = sub.grade ?? "";
-  document.getElementById("gradeFeedback").value = sub.feedback ?? "";
-}
-
-function setView(view) {
-  state.activeView = view;
-  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("is-active", v.dataset.view === view));
-  document.querySelectorAll(".navlink[data-view]").forEach((n) => n.classList.toggle("is-active", n.dataset.view === view));
-  closeSidebarOnMobile();
-}
-
-function applyRole() {
-  const isTeacher = state.role === "teacher";
-  document.body.dataset.role = state.role;
-
-  document.querySelectorAll("[data-role]").forEach((el) => {
-    if (el.id === "studentAssignments" || el.id === "teacherAssignments") return;
-    const shouldShow = el.dataset.role === state.role;
-    el.hidden = !shouldShow;
-  });
-
-  const studentAsg = document.getElementById("studentAssignments");
-  const teacherAsg = document.getElementById("teacherAssignments");
-  if (studentAsg) studentAsg.hidden = isTeacher;
-  if (teacherAsg) teacherAsg.hidden = !isTeacher;
-
-  const asgSub = document.getElementById("asgSub");
-  if (asgSub) {
-    asgSub.textContent = isTeacher
-      ? "Сурагчдын ажлыг шалгаж, дүн өгнө үү."
-      : "Хийх, хийгдэж буй, дүгнэгдсэн ажлуудаа хянана уу.";
-  }
-
-  const roleLabel = isTeacher ? "Багш" : "Сурагч";
-  document.getElementById("profileRole").textContent = roleLabel;
-  document.getElementById("railRole").textContent = roleLabel;
-  document.querySelectorAll(".role-switch__btn").forEach((b) => {
-    const active = b.dataset.role === state.role;
-    b.classList.toggle("is-active", active);
-    b.setAttribute("aria-selected", active);
-  });
-
-  renderStats();
-  renderLibrary();
-  renderVideos();
-  renderKanban();
-  renderSubmissions();
-}
-
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.hidden = false;
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => { toast.hidden = true; }, 2600);
-}
-
-function closePopovers(except) {
-  document.querySelectorAll(".popover").forEach((p) => {
-    if (p.id !== except) p.hidden = true;
-  });
-}
-
-function closeSidebarOnMobile() {
-  document.getElementById("sidebar")?.classList.remove("is-open");
-  document.getElementById("sidebarScrim")?.classList.remove("is-visible");
-}
-
-function bindEvents() {
-  document.querySelectorAll(".navlink[data-view]").forEach((btn) => {
-    btn.addEventListener("click", () => setView(btn.dataset.view));
-  });
-
-  const sidebar = document.getElementById("sidebar");
-  const scrim = document.getElementById("sidebarScrim");
-  document.getElementById("burgerBtn")?.addEventListener("click", () => {
-    sidebar.classList.toggle("is-open");
-    scrim.classList.toggle("is-visible");
-  });
-  scrim?.addEventListener("click", closeSidebarOnMobile);
-
-  document.querySelectorAll(".role-switch__btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      state.role = btn.dataset.role;
-      applyRole();
-      showToast(`Одоо ${state.role === "teacher" ? "Багш" : "Сурагч"} горимоор харж байна`);
-    });
-  });
-
-  const notifBtn = document.getElementById("notifBtn");
-  const profileBtn = document.getElementById("profileBtn");
-  notifBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const pop = document.getElementById("notifPopover");
-    const willOpen = pop.hidden;
-    closePopovers();
-    pop.hidden = !willOpen;
-    notifBtn.setAttribute("aria-expanded", willOpen);
-  });
-
-  profileBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const pop = document.getElementById("profilePopover");
-    const willOpen = pop.hidden;
-    closePopovers();
-    pop.hidden = !willOpen;
-    profileBtn.setAttribute("aria-expanded", willOpen);
-  });
-
-  document.addEventListener("click", () => closePopovers());
-
-  ["filterSubject", "filterGrade", "filterType"].forEach((id) => {
-    document.getElementById(id)?.addEventListener("change", (e) => {
-      const key = id.replace("filter", "").toLowerCase();
-      state.libraryFilters[key] = e.target.value;
-      renderLibrary();
-    });
-  });
-
-  document.getElementById("globalSearch")?.addEventListener("input", (e) => {
-    state.libraryFilters.q = e.target.value;
-    if (state.activeView === "library") renderLibrary();
-  });
-
-  document.getElementById("playlistChips")?.addEventListener("click", (e) => {
-    const chip = e.target.closest("[data-playlist]");
-    if (!chip) return;
-    state.activePlaylist = chip.dataset.playlist;
-    renderPlaylistChips();
-    renderVideos();
-  });
-
-  const modalScrim = document.getElementById("modalScrim");
-  const openModal = () => { modalScrim.hidden = false; };
-  const closeModal = () => { modalScrim.hidden = true; };
-  document.getElementById("uploadBookBtn")?.addEventListener("click", openModal);
-  document.getElementById("uploadVideoBtn")?.addEventListener("click", () => showToast("Видео байршуулах нь мөн адил урсгалыг ашиглана — идэвхжүүлэхийн тулд Supabase Storage-тай холбоно уу."));
-  document.getElementById("modalClose")?.addEventListener("click", closeModal);
-  modalScrim?.addEventListener("click", (e) => { if (e.target === modalScrim) closeModal(); });
-
-  const dropzone = document.getElementById("dropzone");
-  const fileInput = document.getElementById("fileInput");
-  const dropFilename = document.getElementById("dropFilename");
-  
-  dropzone?.addEventListener("click", () => fileInput?.click());
-  fileInput?.addEventListener("change", () => {
-    if (fileInput.files[0]) dropFilename.textContent = `Сонгосон файл: ${fileInput.files[0].name}`;
-  });
-
-  ["dragover", "dragleave", "drop"].forEach((evt) => {
-    dropzone?.addEventListener(evt, (e) => {
-      e.preventDefault();
-      dropzone.classList.toggle("is-drag", evt === "dragover");
-      if (evt === "drop" && e.dataTransfer.files[0]) {
-        dropFilename.textContent = `Сонгосон файл: ${e.dataTransfer.files[0].name}`;
-      }
-    });
-  });
-
-  document.getElementById("uploadForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const title = document.getElementById("uploadTitle").value.trim();
-    if (!title) return;
-    await DB.uploadLibraryItem({
-      title,
-      subject: document.getElementById("uploadSubject").value,
-      grade: document.getElementById("uploadGrade").value,
-      file: fileInput.files[0]?.name || null,
-    });
-    EDU_DATA.library.unshift({
-      id: "l" + Date.now(),
-      title,
-      subject: document.getElementById("uploadSubject").value,
-      grade: document.getElementById("uploadGrade").value,
-      type: "PDF",
-      size: "—",
-      tone: ["forest", "ocean", "sun"][Math.floor(Math.random() * 3)],
-    });
-    closeModal();
-    e.target.reset();
-    if (dropFilename) dropFilename.textContent = "";
-    renderLibrary();
-    showToast("Материал номын санд нийтлэгдлээ");
-  });
-
-  // Kanban делегацын аюулгүй сонсогч
-  document.getElementById("studentAssignments")?.addEventListener("click", (e) => {
-    const toggleBtn = e.target.closest("[data-toggle-submit]");
-    if (toggleBtn) {
-      const panel = document.getElementById(`submit-${toggleBtn.dataset.toggleSubmit}`);
-      if (panel) panel.classList.toggle("is-open");
-    }
-    const submitBtn = e.target.closest("[data-submit-task]");
-    if (submitBtn) {
-      const id = submitBtn.dataset.submitTask;
-      const task = state.assignments.find((a) => a.id === id);
-      if (task) {
-        task.status = "progress";
-        renderKanban();
-        showToast("Даалгавар илгээгдлээ — багш тань удахгүй шалгах болно");
-      }
-    }
-  });
-
-  document.getElementById("submissionList")?.addEventListener("click", (e) => {
-    const row = e.target.closest("[data-submission]");
-    if (!row) return;
-    state.selectedSubmissionId = row.dataset.submission;
-    renderSubmissions();
-  });
-
-  document.getElementById("gradingForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const sub = state.submissions.find((s) => s.id === state.selectedSubmissionId);
-    if (!sub) return;
-    const grade = document.getElementById("gradeScore").value;
-    const feedback = document.getElementById("gradeFeedback").value;
-    await DB.saveGrade(sub.id, grade, feedback);
-    sub.status = "graded";
-    sub.grade = grade;
-    sub.feedback = feedback;
-    renderSubmissions();
-    showToast(`${sub.student}-д дүн хадгалагдлаа`);
-  });
-}
-
-function init() {
-  document.getElementById("greetName").textContent = EDU_DATA.user.name;
-  document.getElementById("profileName").textContent = EDU_DATA.user.name;
-
-  populateLibraryFilters();
-  renderActivity();
-  renderUpNext();
-  renderPlaylistChips();
-  bindEvents();
-  applyRole();
-  setView("dashboard");
-}
-
-document.addEventListener("DOMContentLoaded", init);
-  
