@@ -120,15 +120,8 @@
   </div>
 </div>
 
-<!--
-  Скриптийн дараалал ЧУХАЛ:
-  1) Supabase SDK (CDN)
-  2) js/supabase.js — supabaseClient зарлана
-  3) js/auth.js       — нэвтрэх/бүртгүүлэх маягтыг эндээс удирдана
-  Энэ хуудас нь app.js, charts.js, dashboard.js-г ХЭРЭГГҮЙ тул ачаалахгүй.
--->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
+<!-- Скрипт холболт -->
+<script type="module" src="js/supabase.js"></script>
+<script type="module" src="js/auth.js"></script>
 </body>
 </html>

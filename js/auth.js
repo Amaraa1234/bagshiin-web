@@ -2,27 +2,19 @@
  * ============================================================================
  *  js/auth.js — Нэвтрэх / Бүртгүүлэх / Гарах
  * ============================================================================
- *  Энэ файл 2 хэсгээс бүрдэнэ:
- *    A) Auth  — Supabase Auth-ыг ороож буй үйлчилгээний объект
- *    B) UI wiring — index.html (нэвтрэх/бүртгүүлэх маягт) болон
- *       dashboard.html (гарах товч) дээрх event listener-үүд.
- *  Аль ч хуудсанд ашиглагдах DOM элемент байхгүй бол тухайн хэсэг нь
- *  чимээгүйгээр алгасагдана (optional chaining ашигласан) — тиймээс энэ
- *  ганц файлыг хоёр HTML хуудсанд аль алинд нь ачаалж болно.
- *  Ачаалах дараалал: js/supabase.js-ийн ДАРАА.
- * ============================================================================
  */
+
+// Supabase холболтоо импортлож оруулж ирнэ
+import { supabase, IS_SUPABASE_CONFIGURED } from './supabase.js'
 
 /* ----------------------------------------------------------------------
    A) AUTH SERVICE
    ---------------------------------------------------------------------- */
 const Auth = {
 
-  /** Шинэ хэрэглэгч бүртгэнэ. role нь user_metadata-д хадгалагдана —
-      ингэснээр dashboard.js болон Supabase RLS policy хоёул үүнийг
-      нэмэлт query хийлгүйгээр уншиж чадна. */
+  /** Шинэ хэрэглэгч бүртгэнэ */
   async signUp(email, password, fullName, role = "student") {
-    const { data, error } = await supabaseClient.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName, role } },
@@ -32,35 +24,33 @@ const Auth = {
   },
 
   async signIn(email, password) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;
   },
 
   async signOut() {
-    const { error } = await supabaseClient.auth.signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) throw error;
   },
 
   async getCurrentUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     return user;
   },
 
   async getCurrentSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     return session;
   },
 
-  /** "student" эсвэл "teacher" буцаана. Тодорхойгүй бол "student". */
   async getCurrentRole() {
     const user = await this.getCurrentUser();
     return user?.user_metadata?.role === "teacher" ? "teacher" : "student";
   },
 
-  /** Нэвтрэх / гарах / token сэргээх үйл явдал сонсоно. */
   onAuthStateChange(callback) {
-    return supabaseClient.auth.onAuthStateChange((event, session) => callback(event, session));
+    return supabase.auth.onAuthStateChange((event, session) => callback(event, session));
   },
 };
 
@@ -73,8 +63,6 @@ function initAuthPageUI() {
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
 
-  // Энэ функцийн шаардлагатай элементүүд байхгүй бол (жишээ нь бид
-  // dashboard.html дээр байгаа бол) юу ч хийхгүйгээр гарна.
   if (!tabLogin || !tabRegister || !loginForm || !registerForm) return;
 
   const messageBox = document.getElementById("authMessage");
@@ -112,7 +100,6 @@ function initAuthPageUI() {
   document.getElementById("switchToRegister")?.addEventListener("click", () => showTab("register"));
   document.getElementById("switchToLogin")?.addEventListener("click", () => showTab("login"));
 
-  // "Би бол: Сурагч / Багш" сонголт (бүртгүүлэх маягт дотор)
   document.querySelectorAll(".auth-role-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".auth-role-btn").forEach((b) => b.classList.toggle("is-active", b === btn));
@@ -133,9 +120,7 @@ function initAuthPageUI() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Нэвтэрч байна…";
     try {
-      if (!IS_SUPABASE_CONFIGURED) {
-        // Demo горим: js/supabase.js дотор бодит Supabase түлхүүр
-        // тохируулаагүй үед хуудсыг шууд дашбоард руу үсрүүлнэ.
+      if (typeof IS_SUPABASE_CONFIGURED !== 'undefined' && !IS_SUPABASE_CONFIGURED) {
         await new Promise((resolve) => setTimeout(resolve, 500));
         window.location.href = "dashboard.html";
         return;
@@ -174,7 +159,7 @@ function initAuthPageUI() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Бүртгэж байна…";
     try {
-      if (!IS_SUPABASE_CONFIGURED) {
+      if (typeof IS_SUPABASE_CONFIGURED !== 'undefined' && !IS_SUPABASE_CONFIGURED) {
         await new Promise((resolve) => setTimeout(resolve, 500));
         window.location.href = "dashboard.html";
         return;
@@ -192,15 +177,15 @@ function initAuthPageUI() {
 }
 
 /* ----------------------------------------------------------------------
-   B) UI WIRING — dashboard.html (Гарах товч)
+   C) UI WIRING — dashboard.html (Гарах товч)
    ---------------------------------------------------------------------- */
 function initDashboardAuthUI() {
   const logoutBtn = document.getElementById("logoutBtn");
-  if (!logoutBtn) return; // index.html дээр байхгүй тул чимээгүй гарна
+  if (!logoutBtn) return;
 
   logoutBtn.addEventListener("click", async () => {
     try {
-      if (IS_SUPABASE_CONFIGURED) await Auth.signOut();
+      await Auth.signOut();
       if (typeof showToast === "function") showToast("Системээс гарлаа");
     } catch (err) {
       console.error("[SmartClass] Гарахад алдаа гарлаа:", err);

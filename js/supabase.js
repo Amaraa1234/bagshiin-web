@@ -1,30 +1,12 @@
-/**
- * ============================================================================
- *  js/supabase.js — Supabase client
- * ============================================================================
- *  Хамгийн эхэнд ачаалагдах ёстой файл (Supabase SDK CDN-ийн дараа).
- *  Бусад бүх js файл (auth.js, app.js, dashboard.js) `supabaseClient`
- *  глобал хувьсагчийг эндээс ашиглана.
- *
- *  Утгуудаа Supabase project → Settings → API хэсгээс аваарай.
- *  ⚠️ service_role key-г ХЭЗЭЭ Ч frontend кодонд бичихгүй — зөвхөн anon key.
- * ============================================================================
- */
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+const SUPABASE_URL = "https://yioswlfvqbdyqnhwmxoc.supabase.co"
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpb3N3bGZ2cWJkeXFuaHdteG9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4ODMyMzYsImV4cCI6MjEwMjQ1OTIzNn0.uqZeR18PuzxrcWMlS4JXLlAhblCl0HZndMUG3znbtt8"
 
-if (!window.supabase) {
-  console.error(
-    "[SmartClass] Supabase JS SDK олдсонгүй. HTML файл дотор " +
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2 -г js/supabase.js -ээс " +
-    "ӨМНӨ холбосон эсэхээ шалгана уу."
-  );
+export const IS_SUPABASE_CONFIGURED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY)
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+if (supabase.auth) {
+    console.log("Холбогдсон байна!")
+    console.log(supabase.auth)
 }
-
-const supabaseClient = window.supabase
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
-
-/** true бол та бодит Supabase түлхүүрүүдээ хараахан оруулаагүй байна гэсэн үг. */
-const IS_SUPABASE_CONFIGURED = SUPABASE_URL.indexOf("YOUR-PROJECT-REF") === -1;
