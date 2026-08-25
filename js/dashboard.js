@@ -1,20 +1,13 @@
 /**
  * ============================================================================
- *  js/dashboard.js — SmartClass DASHBOARD хуудасны логик
- * ============================================================================
- *  Зөвхөн dashboard.html дээр ачаална. Энэ файл js/app.js-д тодорхойлсон
- *  `state`, `SMARTCLASS_DATA`, `ICONS`, `TONE`, `escapeHTML`, `DB`-г
- *  ашигладаг тул АЧААЛАХ ДАРААЛАЛ чухал:
- *    supabase.js → auth.js → app.js → charts.js → dashboard.js
- *
- *  Доор бүлэгт хуваасан:
- *    0) CURRENT USER        — бүртгүүлсэн/нэвтэрсэн хэрэглэгчийн нэр, төрлийг ачаална
- *    1) RENDERERS           — өгөгдлийг дэлгэц дээр буулгах функцүүд
- *    2) VIEW / ROLE SWITCH   — хуудас хооронд шилжих, Сурагч/Багш горим
- *    3) INTERACTIONS         — товч дарах, форм илгээх зэрэг event-үүд
- *    4) INIT                  — хуудас ачаалахад ажиллах эхлэл цэг
+ *  js/dashboard.js — SmartClass DASHBOARD хуудасны логик (ES Module)
  * ============================================================================
  */
+
+import { state, SMARTCLASS_DATA, ICONS, TONE, escapeHTML, DB } from "./app.js";
+import { Charts } from "./charts.js";
+import { Auth } from "./auth.js";
+import { IS_SUPABASE_CONFIGURED } from "./supabase.js";
 
 /* ============================================================
    0) CURRENT USER
@@ -33,15 +26,13 @@ function getInitials(fullName) {
  * Бодит нэвтэрсэн хэрэглэгчийн нэр/төрлийг тодорхойлно.
  *   1) Supabase холбогдсон бол Auth.getCurrentUser()-ээс шууд уншина.
  *   2) Үгүй бол (demo горим) auth.js-ийн хадгалсан localStorage утгыг ашиглана.
- * Ингэснээр "Өдрийн мэнд, ..." мэндчилгээ ХЭЗЭЭ Ч хатуу кодлогдсон нэр
- * харуулахгүй — үргэлж бүртгүүлсэн/нэвтэрсэн хүний нэрийг харуулна.
  */
 async function loadCurrentUser() {
-  if (typeof IS_SUPABASE_CONFIGURED !== "undefined" && IS_SUPABASE_CONFIGURED && typeof Auth !== "undefined") {
+  if (IS_SUPABASE_CONFIGURED) {
     try {
       const user = await Auth.getCurrentUser();
       if (user) {
-        const name = user.user_metadata?.full_name || user.email || "Хэрэглэгч";
+        const name = user.user_metadata?.full_name || user.email?.split('@')[0] || "Хэрэглэгч";
         const role = user.user_metadata?.role === "teacher" ? "teacher" : "student";
         return { name, role };
       }
@@ -64,6 +55,7 @@ async function loadCurrentUser() {
    ============================================================ */
 function renderStats() {
   const grid = document.getElementById("statGrid");
+  if (!grid) return;
   const items = SMARTCLASS_DATA.stats[state.role] || [];
   grid.innerHTML = items.map((s) => {
     const t = TONE[s.tone] || TONE.ocean;
@@ -78,7 +70,9 @@ function renderStats() {
 }
 
 function renderActivity() {
-  document.getElementById("activityFeed").innerHTML = SMARTCLASS_DATA.activity.map((a) => `
+  const feed = document.getElementById("activityFeed");
+  if (!feed) return;
+  feed.innerHTML = SMARTCLASS_DATA.activity.map((a) => `
     <li>
       <span class="activity-feed__icon">${ICONS[a.icon] || ICONS.comment}</span>
       <div class="activity-feed__body">
@@ -90,7 +84,9 @@ function renderActivity() {
 }
 
 function renderUpNext() {
-  document.getElementById("upNextList").innerHTML = SMARTCLASS_DATA.upNext.map((u) => `
+  const list = document.getElementById("upNextList");
+  if (!list) return;
+  list.innerHTML = SMARTCLASS_DATA.upNext.map((u) => `
     <li>
       <span class="upnext-list__date">${escapeHTML(u.date)}</span>
       <div>
@@ -110,8 +106,12 @@ function renderWeeklyChart() {
 function populateLibraryFilters() {
   const subjectSel = document.getElementById("filterSubject");
   const gradeSel = document.getElementById("filterGrade");
-  SMARTCLASS_DATA.subjects.forEach((s) => subjectSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`));
-  SMARTCLASS_DATA.grades.forEach((g) => gradeSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`));
+  if (subjectSel) {
+    SMARTCLASS_DATA.subjects.forEach((s) => subjectSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`));
+  }
+  if (gradeSel) {
+    SMARTCLASS_DATA.grades.forEach((g) => gradeSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`));
+  }
 }
 
 function renderLibrary() {
@@ -123,9 +123,12 @@ function renderLibrary() {
     return true;
   });
 
-  document.getElementById("libCount").textContent = items.length;
+  const countEl = document.getElementById("libCount");
+  if (countEl) countEl.textContent = items.length;
 
   const grid = document.getElementById("libraryGrid");
+  if (!grid) return;
+
   if (items.length === 0) {
     grid.innerHTML = `<p style="color:var(--ink-500); grid-column:1/-1;">Эдгээр шүүлтүүрт тохирох материал одоогоор алга байна.</p>`;
     return;
@@ -154,6 +157,7 @@ function renderLibrary() {
 
 function renderPlaylistChips() {
   const row = document.getElementById("playlistChips");
+  if (!row) return;
   row.innerHTML = SMARTCLASS_DATA.playlists.map((p) =>
     `<button class="chip ${p === state.activePlaylist ? "is-active" : ""}" data-playlist="${escapeHTML(p)}" type="button">${escapeHTML(p)}</button>`
   ).join("");
@@ -162,6 +166,8 @@ function renderPlaylistChips() {
 function renderVideos() {
   const items = SMARTCLASS_DATA.videos.filter((v) => state.activePlaylist === "All" || v.playlist === state.activePlaylist);
   const grid = document.getElementById("videoGrid");
+  if (!grid) return;
+
   grid.innerHTML = items.map((v) => {
     const t = TONE[v.tone] || TONE.ocean;
     return `
@@ -243,12 +249,19 @@ function renderGradingPanel() {
   if (empty) empty.hidden = true;
   if (form) form.hidden = false;
 
-  document.getElementById("gradeAvatar").textContent = sub.initials;
-  document.getElementById("gradeStudentName").textContent = sub.student;
-  document.getElementById("gradeAssignmentName").textContent = `${sub.subject} · ${sub.title}`;
-  document.getElementById("gradeSubmissionText").textContent = sub.text;
-  document.getElementById("gradeScore").value = sub.grade ?? "";
-  document.getElementById("gradeFeedback").value = sub.feedback ?? "";
+  const avatar = document.getElementById("gradeAvatar");
+  const studentName = document.getElementById("gradeStudentName");
+  const assignmentName = document.getElementById("gradeAssignmentName");
+  const submissionText = document.getElementById("gradeSubmissionText");
+  const scoreInput = document.getElementById("gradeScore");
+  const feedbackInput = document.getElementById("gradeFeedback");
+
+  if (avatar) avatar.textContent = sub.initials;
+  if (studentName) studentName.textContent = sub.student;
+  if (assignmentName) assignmentName.textContent = `${sub.subject} · ${sub.title}`;
+  if (submissionText) submissionText.textContent = sub.text;
+  if (scoreInput) scoreInput.value = sub.grade ?? "";
+  if (feedbackInput) feedbackInput.value = sub.feedback ?? "";
 }
 
 /* ---- Сурагчид (багшийн горим) ---- */
@@ -323,16 +336,15 @@ function applyRole() {
   }
 
   const roleLabel = isTeacher ? "Багш" : "Сурагч";
-  document.getElementById("railRole").textContent = roleLabel;
+  const railRole = document.getElementById("railRole");
+  if (railRole) railRole.textContent = roleLabel;
+
   document.querySelectorAll(".role-switch__btn").forEach((b) => {
     const active = b.dataset.role === state.role;
     b.classList.toggle("is-active", active);
     b.setAttribute("aria-selected", active);
   });
 
-  // Сурагч горимд шилжихэд зөвхөн багшид зориулсан "Сурагчид" харагдац дээр
-  // зогсож байвал үндсэн самбар руу буцаана (нав товч нуугдсан ч харагдац
-  // идэвхтэй хэвээр байхаас сэргийлнэ).
   if (!isTeacher && state.activeView === "students") {
     setView("dashboard");
   }
@@ -351,6 +363,7 @@ function applyRole() {
    ============================================================ */
 function showToast(message) {
   const toast = document.getElementById("toast");
+  if (!toast) return;
   toast.textContent = message;
   toast.hidden = false;
   clearTimeout(showToast._t);
@@ -376,8 +389,8 @@ function bindEvents() {
   const sidebar = document.getElementById("sidebar");
   const scrim = document.getElementById("sidebarScrim");
   document.getElementById("burgerBtn")?.addEventListener("click", () => {
-    sidebar.classList.toggle("is-open");
-    scrim.classList.toggle("is-visible");
+    sidebar?.classList.toggle("is-open");
+    scrim?.classList.toggle("is-visible");
   });
   scrim?.addEventListener("click", closeSidebarOnMobile);
 
@@ -393,6 +406,7 @@ function bindEvents() {
   notifBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
     const pop = document.getElementById("notifPopover");
+    if (!pop) return;
     const willOpen = pop.hidden;
     closePopovers();
     pop.hidden = !willOpen;
@@ -426,8 +440,8 @@ function bindEvents() {
 
   /* ---- Материал байршуулах modal ---- */
   const modalScrim = document.getElementById("modalScrim");
-  const openModal = () => { modalScrim.hidden = false; };
-  const closeModal = () => { modalScrim.hidden = true; };
+  const openModal = () => { if (modalScrim) modalScrim.hidden = false; };
+  const closeModal = () => { if (modalScrim) modalScrim.hidden = true; };
   document.getElementById("uploadBookBtn")?.addEventListener("click", openModal);
   document.getElementById("modalClose")?.addEventListener("click", closeModal);
   modalScrim?.addEventListener("click", (e) => { if (e.target === modalScrim) closeModal(); });
@@ -438,13 +452,13 @@ function bindEvents() {
 
   dropzone?.addEventListener("click", () => fileInput?.click());
   fileInput?.addEventListener("change", () => {
-    if (fileInput.files[0]) dropFilename.textContent = `Сонгосон файл: ${fileInput.files[0].name}`;
+    if (fileInput.files[0] && dropFilename) dropFilename.textContent = `Сонгосон файл: ${fileInput.files[0].name}`;
   });
   ["dragover", "dragleave", "drop"].forEach((evt) => {
     dropzone?.addEventListener(evt, (e) => {
       e.preventDefault();
       dropzone.classList.toggle("is-drag", evt === "dragover");
-      if (evt === "drop" && e.dataTransfer.files[0]) {
+      if (evt === "drop" && e.dataTransfer.files[0] && dropFilename) {
         dropFilename.textContent = `Сонгосон файл: ${e.dataTransfer.files[0].name}`;
       }
     });
@@ -456,7 +470,7 @@ function bindEvents() {
     if (!title) return;
     const subject = document.getElementById("uploadSubject").value;
     const grade = document.getElementById("uploadGrade").value;
-    await DB.uploadLibraryItem({ title, subject, grade, file: fileInput.files[0]?.name || null });
+    await DB.uploadLibraryItem({ title, subject, grade, file: fileInput?.files[0]?.name || null });
     SMARTCLASS_DATA.library.unshift({
       id: "l" + Date.now(),
       title, subject, grade,
@@ -473,8 +487,8 @@ function bindEvents() {
 
   /* ---- Видео байршуулах modal ---- */
   const videoModalScrim = document.getElementById("videoModalScrim");
-  const openVideoModal = () => { videoModalScrim.hidden = false; };
-  const closeVideoModal = () => { videoModalScrim.hidden = true; };
+  const openVideoModal = () => { if (videoModalScrim) videoModalScrim.hidden = false; };
+  const closeVideoModal = () => { if (videoModalScrim) videoModalScrim.hidden = true; };
   document.getElementById("uploadVideoBtn")?.addEventListener("click", openVideoModal);
   document.getElementById("videoModalClose")?.addEventListener("click", closeVideoModal);
   videoModalScrim?.addEventListener("click", (e) => { if (e.target === videoModalScrim) closeVideoModal(); });
@@ -485,13 +499,13 @@ function bindEvents() {
 
   videoDropzone?.addEventListener("click", () => videoFileInput?.click());
   videoFileInput?.addEventListener("change", () => {
-    if (videoFileInput.files[0]) videoDropFilename.textContent = `Сонгосон файл: ${videoFileInput.files[0].name}`;
+    if (videoFileInput.files[0] && videoDropFilename) videoDropFilename.textContent = `Сонгосон файл: ${videoFileInput.files[0].name}`;
   });
   ["dragover", "dragleave", "drop"].forEach((evt) => {
     videoDropzone?.addEventListener(evt, (e) => {
       e.preventDefault();
       videoDropzone.classList.toggle("is-drag", evt === "dragover");
-      if (evt === "drop" && e.dataTransfer.files[0]) {
+      if (evt === "drop" && e.dataTransfer.files[0] && videoDropFilename) {
         videoDropFilename.textContent = `Сонгосон файл: ${e.dataTransfer.files[0].name}`;
       }
     });
@@ -503,7 +517,7 @@ function bindEvents() {
     if (!title) return;
     const subject = document.getElementById("videoSubject").value;
     const grade = document.getElementById("videoGrade").value;
-    await DB.uploadVideo({ title, subject, grade, file: videoFileInput.files[0]?.name || null });
+    await DB.uploadVideo({ title, subject, grade, file: videoFileInput?.files[0]?.name || null });
     SMARTCLASS_DATA.videos.unshift({
       id: "v" + Date.now(),
       title,
@@ -523,8 +537,8 @@ function bindEvents() {
 
   /* ---- Ангид даалгавар илгээх modal ---- */
   const assignmentModalScrim = document.getElementById("assignmentModalScrim");
-  const openAssignmentModal = () => { assignmentModalScrim.hidden = false; };
-  const closeAssignmentModal = () => { assignmentModalScrim.hidden = true; };
+  const openAssignmentModal = () => { if (assignmentModalScrim) assignmentModalScrim.hidden = false; };
+  const closeAssignmentModal = () => { if (assignmentModalScrim) assignmentModalScrim.hidden = true; };
   document.getElementById("newAssignmentBtn")?.addEventListener("click", openAssignmentModal);
   document.getElementById("assignmentModalClose")?.addEventListener("click", closeAssignmentModal);
   assignmentModalScrim?.addEventListener("click", (e) => { if (e.target === assignmentModalScrim) closeAssignmentModal(); });
@@ -601,11 +615,18 @@ function bindEvents() {
    ============================================================ */
 async function init() {
   const currentUser = await loadCurrentUser();
-  SMARTCLASS_DATA.user.name = currentUser.name;
-  SMARTCLASS_DATA.user.initials = getInitials(currentUser.name);
+  
+  if (SMARTCLASS_DATA.user) {
+    SMARTCLASS_DATA.user.name = currentUser.name;
+    SMARTCLASS_DATA.user.initials = getInitials(currentUser.name);
+  }
   state.role = currentUser.role;
 
-  document.getElementById("greetName").textContent = SMARTCLASS_DATA.user.name;
+  // HTML дээрх нэр харуулах элементүүдэд оноох
+  const greetName = document.getElementById("greetName");
+  const userName = document.getElementById("userName");
+  if (greetName) greetName.textContent = currentUser.name;
+  if (userName) userName.textContent = currentUser.name;
 
   populateLibraryFilters();
   populateStudentFilters();
@@ -613,7 +634,7 @@ async function init() {
   renderUpNext();
   renderPlaylistChips();
   bindEvents();
-  applyRole(); // renderWeeklyChart(), renderStudents() (шаардлагатай бол) зэргийг дуудна
+  applyRole();
   setView("dashboard");
 }
 

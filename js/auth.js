@@ -1,19 +1,17 @@
 /**
  * ============================================================================
- *  js/auth.js — Нэвтрэх / Бүртгүүлэх / Гарах
+ *   js/auth.js — Нэвтрэх / Бүртгүүлэх / Гарах (ES Module)
  * ============================================================================
  */
 
-// Supabase холболтоо импортлож оруулж ирнэ
-import { supabase, IS_SUPABASE_CONFIGURED } from './supabase.js'
+import { supabase, IS_SUPABASE_CONFIGURED } from './supabase.js';
 
-const Auth = {
- 
-  /** Шинэ хэрэглэгч бүртгэнэ. role нь user_metadata-д хадгалагдана —
-      ингэснээр dashboard.js болон Supabase RLS policy хоёул үүнийг
-      нэмэлт query хийлгүйгээр уншиж чадна. */
+export const Auth = {
+  /** 
+   * Шинэ хэрэглэгч бүртгэнэ. Role нь user_metadata-д хадгалагдана.
+   */
   async signUp(email, password, fullName, role = "student") {
-    const { data, error } = await supabaseClient.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName, role } },
@@ -21,40 +19,43 @@ const Auth = {
     if (error) throw error;
     return data;
   },
- 
+
   async signIn(email, password) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;
   },
- 
+
   async signOut() {
-    const { error } = await supabaseClient.auth.signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) throw error;
   },
- 
+
   async getCurrentUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     return user;
   },
- 
+
   async getCurrentSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     return session;
   },
- 
+
   /** "student" эсвэл "teacher" буцаана. Тодорхойгүй бол "student". */
   async getCurrentRole() {
     const user = await this.getCurrentUser();
     return user?.user_metadata?.role === "teacher" ? "teacher" : "student";
   },
- 
+
   /** Нэвтрэх / гарах / token сэргээх үйл явдал сонсоно. */
   onAuthStateChange(callback) {
-    return supabaseClient.auth.onAuthStateChange((event, session) => callback(event, session));
+    return supabase.auth.onAuthStateChange((event, session) => callback(event, session));
   },
 };
- 
+
+// Global scope-д холбож өгнө
+window.Auth = Auth;
+
 /* ----------------------------------------------------------------------
    B) UI WIRING — index.html (Нэвтрэх / Бүртгүүлэх хуудас)
    ---------------------------------------------------------------------- */
@@ -63,13 +64,11 @@ function initAuthPageUI() {
   const tabRegister = document.getElementById("tabRegister");
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
- 
-  // Энэ функцийн шаардлагатай элементүүд байхгүй бол (жишээ нь бид
-  // dashboard.html дээр байгаа бол) юу ч хийхгүйгээр гарна.
+
   if (!tabLogin || !tabRegister || !loginForm || !registerForm) return;
- 
+
   const messageBox = document.getElementById("authMessage");
- 
+
   function showTab(tab) {
     const isLogin = tab === "login";
     tabLogin.classList.toggle("is-active", isLogin);
@@ -78,32 +77,34 @@ function initAuthPageUI() {
     tabRegister.setAttribute("aria-selected", !isLogin);
     loginForm.hidden = !isLogin;
     registerForm.hidden = isLogin;
+    
     const switchToRegisterLine = document.getElementById("switchToRegisterLine");
     const switchToLoginLine = document.getElementById("switchToLoginLine");
     if (switchToRegisterLine) switchToRegisterLine.hidden = !isLogin;
     if (switchToLoginLine) switchToLoginLine.hidden = isLogin;
+    
     clearMessage();
   }
- 
+
   function showMessage(text, kind = "error") {
     if (!messageBox) return;
     messageBox.textContent = text;
     messageBox.hidden = false;
     messageBox.className = `auth-message auth-message--${kind}`;
   }
- 
+
   function clearMessage() {
     if (!messageBox) return;
     messageBox.hidden = true;
     messageBox.textContent = "";
   }
- 
+
   tabLogin.addEventListener("click", () => showTab("login"));
   tabRegister.addEventListener("click", () => showTab("register"));
   document.getElementById("switchToRegister")?.addEventListener("click", () => showTab("register"));
   document.getElementById("switchToLogin")?.addEventListener("click", () => showTab("login"));
- 
-  // "Би бол: Сурагч / Багш" сонголт (бүртгүүлэх маягт дотор)
+
+  // Сонгосон ролийг (Сурагч/Багш) хадгалах
   document.querySelectorAll(".auth-role-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".auth-role-btn").forEach((b) => b.classList.toggle("is-active", b === btn));
@@ -111,8 +112,8 @@ function initAuthPageUI() {
       if (roleInput) roleInput.value = btn.dataset.role;
     });
   });
- 
-  // ---- Нэвтрэх ----
+
+  // ---- Нэвтрэх хэсэг ----
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearMessage();
@@ -120,16 +121,11 @@ function initAuthPageUI() {
     const password = document.getElementById("loginPassword").value;
     const submitBtn = loginForm.querySelector('button[type="submit"]');
     const originalLabel = submitBtn.textContent;
- 
+
     submitBtn.disabled = true;
     submitBtn.textContent = "Нэвтэрч байна…";
     try {
       if (!IS_SUPABASE_CONFIGURED) {
-        // Demo горим: js/supabase.js дотор бодит Supabase түлхүүр
-        // тохируулаагүй үед хуудсыг шууд дашбоард руу үсрүүлнэ.
-        // Хэрэв энэ browser дээр өмнө нь бүртгүүлж нэр хадгалагдсан бол
-        // тэрийг хэвээр үлдээж, шинээр зөвхөн нэвтэрч буй тохиолдолд
-        // имэйлээс дэвшилтэт нэр гаргаж хадгална.
         if (!localStorage.getItem("smartclass_user_name")) {
           const derivedName = email
             .split("@")[0]
@@ -153,8 +149,8 @@ function initAuthPageUI() {
       submitBtn.textContent = originalLabel;
     }
   });
- 
-  // ---- Бүртгүүлэх ----
+
+  // ---- Бүртгүүлэх хэсэг ----
   registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearMessage();
@@ -165,7 +161,7 @@ function initAuthPageUI() {
     const role = document.getElementById("registerRole")?.value || "student";
     const submitBtn = registerForm.querySelector('button[type="submit"]');
     const originalLabel = submitBtn.textContent;
- 
+
     if (password !== confirmPassword) {
       showMessage("Нууц үг таарахгүй байна.", "error");
       return;
@@ -174,13 +170,11 @@ function initAuthPageUI() {
       showMessage("Нууц үг дор хаяж 6 тэмдэгт байх ёстой.", "error");
       return;
     }
- 
+
     submitBtn.disabled = true;
     submitBtn.textContent = "Бүртгэж байна…";
     try {
       if (!IS_SUPABASE_CONFIGURED) {
-        // Demo горим: бүртгүүлэх маягтад бичсэн БОДИТ нэр, сонгосон
-        // төрлийг хадгална — dashboard.html-ийн мэндчилгээ үүнийг ашиглана.
         localStorage.setItem("smartclass_user_name", fullName);
         localStorage.setItem("smartclass_user_role", role);
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -198,20 +192,20 @@ function initAuthPageUI() {
     }
   });
 }
- 
+
 /* ----------------------------------------------------------------------
-   B) UI WIRING — dashboard.html (Гарах товч)
+   C) UI WIRING — dashboard.html (Гарах товч)
    ---------------------------------------------------------------------- */
 function initDashboardAuthUI() {
   const logoutBtn = document.getElementById("logoutBtn");
-  if (!logoutBtn) return; // index.html дээр байхгүй тул чимээгүй гарна
- 
+  if (!logoutBtn) return;
+
   logoutBtn.addEventListener("click", async () => {
     try {
       if (IS_SUPABASE_CONFIGURED) await Auth.signOut();
       localStorage.removeItem("smartclass_user_name");
       localStorage.removeItem("smartclass_user_role");
-      if (typeof showToast === "function") showToast("Системээс гарлаа");
+      if (typeof window.showToast === "function") window.showToast("Системээс гарлаа");
     } catch (err) {
       console.error("[SmartClass] Гарахад алдаа гарлаа:", err);
     } finally {
@@ -219,9 +213,9 @@ function initDashboardAuthUI() {
     }
   });
 }
- 
+
+// Эхлүүлэх event listener
 document.addEventListener("DOMContentLoaded", () => {
   initAuthPageUI();
   initDashboardAuthUI();
 });
- 
