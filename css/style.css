@@ -557,3 +557,232 @@ h1 em, h2 em, h3 em {
   .stat-grid { grid-template-columns: 1fr; }
   .auth-panel { padding: 24px 18px; }
 }
+/* ==========================================================================
+   TEACHER DASHBOARD (teacher-dashboard.html - Загвар)
+   ========================================================================== */
+
+/* ---------- Лейаут Бүтэц ---------- */
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* ---------- Толгой хэсэг (Header) ---------- */
+.dashboard-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 32px;
+  background: rgba(246, 248, 247, 0.85);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-header .logo {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--forest-900);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-header .badge {
+  position: static; /* Статик байрлал */
+  background: var(--sun-500);
+  color: var(--forest-900);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  border: none;
+}
+
+.dashboard-header .user-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dashboard-header #userNameDisplay {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink-900);
+}
+
+/* ---------- Үндсэн агуулгын хэсэг (Main Content) ---------- */
+.dashboard-main {
+  flex: 1;
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 28px 64px;
+}
+
+.dashboard-main h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--ink-900);
+  margin-bottom: 24px;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Багшийн Статистик Картууд ---------- */
+.teacher-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.teacher-stats .card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.teacher-stats .card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.teacher-stats .card::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--forest-100);
+  opacity: 0.6;
+}
+
+.teacher-stats .card h3 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink-500);
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.teacher-stats .card p {
+  font-family: var(--font-mono);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--forest-700);
+  position: relative;
+  z-index: 1;
+  line-height: 1;
+}
+
+/* ---------- Түгээмэл Товчлуур (Button secondary style) ---------- */
+.btn--secondary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-700);
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: var(--r-md);
+  transition: all 0.15s ease;
+}
+
+.btn--secondary:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+  background: #fde8e6;
+}
+
+/* ---------- Responsive Тохиргоо ---------- */
+@media (max-width: 760px) {
+  .dashboard-header {
+    padding: 12px 16px;
+  }
+  
+  .dashboard-main {
+    padding: 20px 16px 48px;
+  }
+  
+  .teacher-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .table-container {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.students-table th, 
+.students-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.students-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.badge-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.badge-success {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+}
+/* Sidebar болон Z-Index засах */
+.sidebar {
+  z-index: 100 !important;
+}
+
+/* Sidebar scrim (бүрхүүл) товчлуур дарагдахад саад болохоос сэргийлэх */
+.sidebar-scrim:not(.is-visible) {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Дэлгэц том үед Sidebar-ийг заавал харуулах */
+@media (min-width: 761px) {
+  .sidebar {
+    transform: none !important;
+    position: fixed !important;
+  }
+  .main-col {
+    margin-left: var(--sidebar-w) !important;
+  }
+  .topbar__burger {
+    display: none !important;
+  }
+}

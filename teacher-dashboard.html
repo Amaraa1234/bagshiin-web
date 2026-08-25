@@ -17,11 +17,10 @@
       </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main Content (Энд шинэчилсэн хэсгийг орлуулж тавилаа) -->
     <main class="dashboard-main">
       <h1>Багшийн Удирдлагын Хэсэг</h1>
       
-      <!-- Сул зогсож буй контент рендэрлэх хэсгүүд -->
       <section class="teacher-stats">
         <div class="card">
           <h3>Нийт багц даалгавар</h3>
@@ -30,6 +29,33 @@
         <div class="card">
           <h3>Ирсэн хариултууд</h3>
           <p id="totalSubmissions">0</p>
+        </div>
+        <div class="card">
+          <h3>Нийт сурагчид</h3>
+          <p id="totalStudents">0</p>
+        </div>
+      </section>
+
+      <!-- Сурагчдын мэдээлэл харуулах шинэ хэсэг -->
+      <section class="students-section" style="margin-top: 2rem;">
+        <h2>Сурагчдын Жагсаалт</h2>
+        <div class="table-container">
+          <table class="students-table">
+            <thead>
+              <tr>
+                <th>Сурагчийн нэр</th>
+                <th>Анги</th>
+                <th>Хичээл</th>
+                <th>Дундаж дүн</th>
+                <th>Шалгуулах даалгавар</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+              <tr>
+                <td colspan="5">Уншиж байна...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </main>

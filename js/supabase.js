@@ -22,6 +22,35 @@ export const DB = {
     if (error) { console.error(error); return []; }
     return data;
   },
+  async fetchStudents() {
+    const { data, error } = await supabase
+      .from('students')
+      .select('*')
+      .order('full_name', { ascending: true });
+
+    if (error) {
+      console.error("Сурагчдын мэдээлэл авахад алдаа гарлаа:", error);
+      return [];
+    }
+    return data;
+  },
+
+  async fetchSubmissionsWithStudent() {
+    const { data, error } = await supabase
+      .from('submissions')
+      .select(`
+        *,
+        assignments ( title )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Даалгавар авахад алдаа гарлаа:", error);
+      return [];
+    }
+    return data;
+  },
+
   async addLibraryItem(item) {
     if (!IS_SUPABASE_CONFIGURED) return null;
     const { data, error } = await supabase.from('library').insert([item]).select();
