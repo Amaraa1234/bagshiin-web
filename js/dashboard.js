@@ -7,13 +7,57 @@
  *  ашигладаг тул АЧААЛАХ ДАРААЛАЛ чухал:
  *    supabase.js → auth.js → app.js → charts.js → dashboard.js
  *
- *  Доор 4 логик бүлэгт хуваасан:
- *    1) RENDERERS          — өгөгдлийг дэлгэц дээр буулгах функцүүд
- *    2) VIEW / ROLE SWITCH  — хуудас хооронд шилжих, Сурагч/Багш горим
- *    3) INTERACTIONS        — товч дарах, форм илгээх зэрэг event-үүд
- *    4) INIT                 — хуудас ачаалахад ажиллах эхлэл цэг
+ *  Доор бүлэгт хуваасан:
+ *    0) CURRENT USER        — бүртгүүлсэн/нэвтэрсэн хэрэглэгчийн нэр, төрлийг ачаална
+ *    1) RENDERERS           — өгөгдлийг дэлгэц дээр буулгах функцүүд
+ *    2) VIEW / ROLE SWITCH   — хуудас хооронд шилжих, Сурагч/Багш горим
+ *    3) INTERACTIONS         — товч дарах, форм илгээх зэрэг event-үүд
+ *    4) INIT                  — хуудас ачаалахад ажиллах эхлэл цэг
  * ============================================================================
  */
+
+/* ============================================================
+   0) CURRENT USER
+   ============================================================ */
+
+/** "Бат-Эрдэнэ Ганбаатар" -> "БГ" гэх мэт эхний үсгүүдийг гаргана. */
+function getInitials(fullName) {
+  if (!fullName) return "ХБ";
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "ХБ";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+/**
+ * Бодит нэвтэрсэн хэрэглэгчийн нэр/төрлийг тодорхойлно.
+ *   1) Supabase холбогдсон бол Auth.getCurrentUser()-ээс шууд уншина.
+ *   2) Үгүй бол (demo горим) auth.js-ийн хадгалсан localStorage утгыг ашиглана.
+ * Ингэснээр "Өдрийн мэнд, ..." мэндчилгээ ХЭЗЭЭ Ч хатуу кодлогдсон нэр
+ * харуулахгүй — үргэлж бүртгүүлсэн/нэвтэрсэн хүний нэрийг харуулна.
+ */
+async function loadCurrentUser() {
+  if (typeof IS_SUPABASE_CONFIGURED !== "undefined" && IS_SUPABASE_CONFIGURED && typeof Auth !== "undefined") {
+    try {
+      const user = await Auth.getCurrentUser();
+      if (user) {
+        const name = user.user_metadata?.full_name || user.email || "Хэрэглэгч";
+        const role = user.user_metadata?.role === "teacher" ? "teacher" : "student";
+        return { name, role };
+      }
+    } catch (err) {
+      console.error("[SmartClass] Хэрэглэгчийн мэдээлэл татахад алдаа гарлаа:", err);
+    }
+  }
+
+  // Demo горим: index.html дээр бүртгүүлэх/нэвтрэх үед хадгалсан утга
+  const storedName = localStorage.getItem("smartclass_user_name");
+  const storedRole = localStorage.getItem("smartclass_user_role");
+  return {
+    name: storedName || "Зочин хэрэглэгч",
+    role: storedRole === "teacher" ? "teacher" : "student",
+  };
+}
 
 /* ============================================================
    1) RENDERERS
@@ -66,18 +110,15 @@ function renderWeeklyChart() {
 function populateLibraryFilters() {
   const subjectSel = document.getElementById("filterSubject");
   const gradeSel = document.getElementById("filterGrade");
-  const typeSel = document.getElementById("filterType");
   SMARTCLASS_DATA.subjects.forEach((s) => subjectSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`));
   SMARTCLASS_DATA.grades.forEach((g) => gradeSel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`));
-  ["PDF", "EPUB"].forEach((t) => typeSel.insertAdjacentHTML("beforeend", `<option value="${t}">${t}</option>`));
 }
 
 function renderLibrary() {
-  const { subject, grade, type, q } = state.libraryFilters;
+  const { subject, grade, q } = state.libraryFilters;
   const items = SMARTCLASS_DATA.library.filter((item) => {
     if (subject !== "all" && item.subject !== subject) return false;
     if (grade !== "all" && item.grade !== grade) return false;
-    if (type !== "all" && item.type !== type) return false;
     if (q && !item.title.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
@@ -154,10 +195,10 @@ function renderKanban() {
     }
     el.innerHTML = tasks.map((a) => `
       <div class="task-card" data-task="${escapeHTML(a.id)}">
-        <span class="task-card__subject">${escapeHTML(a.subject)}</span>
+        <span class="task-card__subject">${escapeHTML(a.subject)} · ${escapeHTML(a.grade)}</span>
         <div class="task-card__title">${escapeHTML(a.title)}</div>
         ${a.status === "done"
-          ? `<span class="task-card__grade">${escapeHTML(a.grade)}/100</span>`
+          ? `<span class="task-card__grade">${escapeHTML(a.grade_score)}/100</span>`
           : `<div class="task-card__due">Хугацаа: ${escapeHTML(a.due)}</div>
              <button class="btn btn--ghost btn--sm task-card__btn" data-toggle-submit="${escapeHTML(a.id)}">Даалгавар илгээх</button>
              <div class="submit-panel" id="submit-${escapeHTML(a.id)}">
@@ -210,6 +251,45 @@ function renderGradingPanel() {
   document.getElementById("gradeFeedback").value = sub.feedback ?? "";
 }
 
+/* ---- Сурагчид (багшийн горим) ---- */
+function populateStudentFilters() {
+  const sel = document.getElementById("filterStudentGrade");
+  if (!sel || sel.dataset.populated) return;
+  SMARTCLASS_DATA.grades.forEach((g) => sel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`));
+  sel.dataset.populated = "true";
+}
+
+function renderStudents() {
+  const grid = document.getElementById("studentGrid");
+  if (!grid) return;
+  const gradeFilter = document.getElementById("filterStudentGrade")?.value || "all";
+  const items = SMARTCLASS_DATA.students.filter((s) => gradeFilter === "all" || s.grade === gradeFilter);
+
+  const countEl = document.getElementById("studentCount");
+  if (countEl) countEl.textContent = items.length;
+
+  if (items.length === 0) {
+    grid.innerHTML = `<p style="color:var(--ink-500); grid-column:1/-1;">Энэ ангид сурагч алга байна.</p>`;
+    return;
+  }
+
+  grid.innerHTML = items.map((s) => `
+    <article class="student-card">
+      <span class="avatar">${escapeHTML(s.initials)}</span>
+      <div class="student-card__body">
+        <strong>${escapeHTML(s.name)}</strong>
+        <p>${escapeHTML(s.grade)} · ${escapeHTML(s.subject)}</p>
+      </div>
+      <div class="student-card__stats">
+        <span class="student-card__grade">${escapeHTML(s.avgGrade)}%</span>
+        ${s.pending > 0
+          ? `<span class="status-pill status-pill--pending">${escapeHTML(s.pending)} хийгдээгүй</span>`
+          : `<span class="status-pill status-pill--graded">Бүгд хийсэн</span>`
+        }
+      </div>
+    </article>`).join("");
+}
+
 /* ============================================================
    2) VIEW / ROLE SWITCHING
    ============================================================ */
@@ -243,7 +323,6 @@ function applyRole() {
   }
 
   const roleLabel = isTeacher ? "Багш" : "Сурагч";
-  document.getElementById("profileRole").textContent = roleLabel;
   document.getElementById("railRole").textContent = roleLabel;
   document.querySelectorAll(".role-switch__btn").forEach((b) => {
     const active = b.dataset.role === state.role;
@@ -251,12 +330,20 @@ function applyRole() {
     b.setAttribute("aria-selected", active);
   });
 
+  // Сурагч горимд шилжихэд зөвхөн багшид зориулсан "Сурагчид" харагдац дээр
+  // зогсож байвал үндсэн самбар руу буцаана (нав товч нуугдсан ч харагдац
+  // идэвхтэй хэвээр байхаас сэргийлнэ).
+  if (!isTeacher && state.activeView === "students") {
+    setView("dashboard");
+  }
+
   renderStats();
   renderLibrary();
   renderVideos();
   renderKanban();
   renderSubmissions();
   renderWeeklyChart();
+  if (isTeacher) renderStudents();
 }
 
 /* ============================================================
@@ -303,7 +390,6 @@ function bindEvents() {
   });
 
   const notifBtn = document.getElementById("notifBtn");
-  const profileBtn = document.getElementById("profileBtn");
   notifBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
     const pop = document.getElementById("notifPopover");
@@ -313,24 +399,17 @@ function bindEvents() {
     notifBtn.setAttribute("aria-expanded", willOpen);
   });
 
-  profileBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const pop = document.getElementById("profilePopover");
-    const willOpen = pop.hidden;
-    closePopovers();
-    pop.hidden = !willOpen;
-    profileBtn.setAttribute("aria-expanded", willOpen);
-  });
-
   document.addEventListener("click", () => closePopovers());
 
-  ["filterSubject", "filterGrade", "filterType"].forEach((id) => {
+  ["filterSubject", "filterGrade"].forEach((id) => {
     document.getElementById(id)?.addEventListener("change", (e) => {
       const key = id.replace("filter", "").toLowerCase();
       state.libraryFilters[key] = e.target.value;
       renderLibrary();
     });
   });
+
+  document.getElementById("filterStudentGrade")?.addEventListener("change", renderStudents);
 
   document.getElementById("globalSearch")?.addEventListener("input", (e) => {
     state.libraryFilters.q = e.target.value;
@@ -345,11 +424,11 @@ function bindEvents() {
     renderVideos();
   });
 
+  /* ---- Материал байршуулах modal ---- */
   const modalScrim = document.getElementById("modalScrim");
   const openModal = () => { modalScrim.hidden = false; };
   const closeModal = () => { modalScrim.hidden = true; };
   document.getElementById("uploadBookBtn")?.addEventListener("click", openModal);
-  document.getElementById("uploadVideoBtn")?.addEventListener("click", () => showToast("Видео байршуулах нь мөн адил урсгалыг ашиглана — идэвхжүүлэхийн тулд Supabase Storage-тай холбоно уу."));
   document.getElementById("modalClose")?.addEventListener("click", closeModal);
   modalScrim?.addEventListener("click", (e) => { if (e.target === modalScrim) closeModal(); });
 
@@ -361,7 +440,6 @@ function bindEvents() {
   fileInput?.addEventListener("change", () => {
     if (fileInput.files[0]) dropFilename.textContent = `Сонгосон файл: ${fileInput.files[0].name}`;
   });
-
   ["dragover", "dragleave", "drop"].forEach((evt) => {
     dropzone?.addEventListener(evt, (e) => {
       e.preventDefault();
@@ -376,26 +454,105 @@ function bindEvents() {
     e.preventDefault();
     const title = document.getElementById("uploadTitle").value.trim();
     if (!title) return;
-    await DB.uploadLibraryItem({
-      title,
-      subject: document.getElementById("uploadSubject").value,
-      grade: document.getElementById("uploadGrade").value,
-      file: fileInput.files[0]?.name || null,
-    });
+    const subject = document.getElementById("uploadSubject").value;
+    const grade = document.getElementById("uploadGrade").value;
+    await DB.uploadLibraryItem({ title, subject, grade, file: fileInput.files[0]?.name || null });
     SMARTCLASS_DATA.library.unshift({
       id: "l" + Date.now(),
-      title,
-      subject: document.getElementById("uploadSubject").value,
-      grade: document.getElementById("uploadGrade").value,
+      title, subject, grade,
       type: "PDF",
       size: "—",
-      tone: ["forest", "ocean", "sun"][Math.floor(Math.random() * 3)],
+      tone: subject === "Нийгэм" ? "ocean" : "forest",
     });
     closeModal();
     e.target.reset();
     if (dropFilename) dropFilename.textContent = "";
     renderLibrary();
     showToast("Материал номын санд нийтлэгдлээ");
+  });
+
+  /* ---- Видео байршуулах modal ---- */
+  const videoModalScrim = document.getElementById("videoModalScrim");
+  const openVideoModal = () => { videoModalScrim.hidden = false; };
+  const closeVideoModal = () => { videoModalScrim.hidden = true; };
+  document.getElementById("uploadVideoBtn")?.addEventListener("click", openVideoModal);
+  document.getElementById("videoModalClose")?.addEventListener("click", closeVideoModal);
+  videoModalScrim?.addEventListener("click", (e) => { if (e.target === videoModalScrim) closeVideoModal(); });
+
+  const videoDropzone = document.getElementById("videoDropzone");
+  const videoFileInput = document.getElementById("videoFileInput");
+  const videoDropFilename = document.getElementById("videoDropFilename");
+
+  videoDropzone?.addEventListener("click", () => videoFileInput?.click());
+  videoFileInput?.addEventListener("change", () => {
+    if (videoFileInput.files[0]) videoDropFilename.textContent = `Сонгосон файл: ${videoFileInput.files[0].name}`;
+  });
+  ["dragover", "dragleave", "drop"].forEach((evt) => {
+    videoDropzone?.addEventListener(evt, (e) => {
+      e.preventDefault();
+      videoDropzone.classList.toggle("is-drag", evt === "dragover");
+      if (evt === "drop" && e.dataTransfer.files[0]) {
+        videoDropFilename.textContent = `Сонгосон файл: ${e.dataTransfer.files[0].name}`;
+      }
+    });
+  });
+
+  document.getElementById("videoUploadForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = document.getElementById("videoTitle").value.trim();
+    if (!title) return;
+    const subject = document.getElementById("videoSubject").value;
+    const grade = document.getElementById("videoGrade").value;
+    await DB.uploadVideo({ title, subject, grade, file: videoFileInput.files[0]?.name || null });
+    SMARTCLASS_DATA.videos.unshift({
+      id: "v" + Date.now(),
+      title,
+      teacher: SMARTCLASS_DATA.user.name,
+      duration: "0:00",
+      playlist: subject,
+      progress: 0,
+      tone: subject === "Нийгэм" ? "ocean" : "forest",
+    });
+    closeVideoModal();
+    e.target.reset();
+    if (videoDropFilename) videoDropFilename.textContent = "";
+    renderPlaylistChips();
+    renderVideos();
+    showToast("Видео хичээл амжилттай нэмэгдлээ");
+  });
+
+  /* ---- Ангид даалгавар илгээх modal ---- */
+  const assignmentModalScrim = document.getElementById("assignmentModalScrim");
+  const openAssignmentModal = () => { assignmentModalScrim.hidden = false; };
+  const closeAssignmentModal = () => { assignmentModalScrim.hidden = true; };
+  document.getElementById("newAssignmentBtn")?.addEventListener("click", openAssignmentModal);
+  document.getElementById("assignmentModalClose")?.addEventListener("click", closeAssignmentModal);
+  assignmentModalScrim?.addEventListener("click", (e) => { if (e.target === assignmentModalScrim) closeAssignmentModal(); });
+
+  document.getElementById("assignmentForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = document.getElementById("assignTitle").value.trim();
+    if (!title) return;
+    const subject = document.getElementById("assignSubject").value;
+    const grade = document.getElementById("assignGrade").value;
+    const due = document.getElementById("assignDue").value.trim();
+    const instructions = document.getElementById("assignInstructions").value.trim();
+
+    await DB.createAssignment({ title, subject, grade, due, instructions });
+
+    const newAssignment = {
+      id: "a" + Date.now(),
+      subject, title, due, grade,
+      status: "todo",
+      student: "Бүх сурагч",
+    };
+    SMARTCLASS_DATA.assignments.unshift(newAssignment);
+    state.assignments.unshift({ ...newAssignment });
+
+    closeAssignmentModal();
+    e.target.reset();
+    renderKanban();
+    showToast(`«${title}» ${grade}-д амжилттай илгээгдлээ`);
   });
 
   // Kanban-ын товчнуудад делегацлагдсан сонсогч
@@ -442,16 +599,21 @@ function bindEvents() {
 /* ============================================================
    4) INIT
    ============================================================ */
-function init() {
+async function init() {
+  const currentUser = await loadCurrentUser();
+  SMARTCLASS_DATA.user.name = currentUser.name;
+  SMARTCLASS_DATA.user.initials = getInitials(currentUser.name);
+  state.role = currentUser.role;
+
   document.getElementById("greetName").textContent = SMARTCLASS_DATA.user.name;
-  document.getElementById("profileName").textContent = SMARTCLASS_DATA.user.name;
 
   populateLibraryFilters();
+  populateStudentFilters();
   renderActivity();
   renderUpNext();
   renderPlaylistChips();
   bindEvents();
-  applyRole(); // renderWeeklyChart()-г бас дуудна
+  applyRole(); // renderWeeklyChart(), renderStudents() (шаардлагатай бол) зэргийг дуудна
   setView("dashboard");
 }
 
