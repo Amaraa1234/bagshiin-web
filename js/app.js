@@ -3,7 +3,7 @@
  *  js/app.js — SmartClass CORE LAYER
  * ============================================================================
  *  Энэ файл нь бусад бүх скриптийн СУУРЬ давхарга. Дараах зүйлсийг агуулна:
- *    1) STATE        — апп даяар хуваалцах төлөв (role, view, filters гэх мэт)
+ *    1) STATE        — апп даяар хуваалцах төлөв (view, filters гэх мэт)
  *    2) CONSTANTS     — icon SVG-үүд, өнгөний токенууд
  *    3) MOCK DATA     — SMARTCLASS_DATA (жинхэнэ Supabase холбогдох хүртэлх жишиг өгөгдөл)
  *    4) HELPERS       — escapeHTML, DB (өгөгдөл татах/хадгалах давхарга)
@@ -14,12 +14,10 @@
    1) STATE — dashboard.js-ийн render функцүүд эндээс уншиж/бичнэ
    ---------------------------------------------------------------------- */
 export const state = {
-  role: "student",              // "student" | "teacher"
-  activeView: "dashboard",      // dashboard | library | videos | assignments | students
+  role: "student",              // Зөвхөн "student" горим
+  activeView: "dashboard",      // dashboard | library | videos | assignments
   libraryFilters: { subject: "all", grade: "all", q: "" },
   activePlaylist: "All",
-  selectedSubmissionId: null,
-  submissions: [],
   assignments: [],
 };
 
@@ -37,7 +35,6 @@ export const ICONS = {
   comment: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4 8.6 8.6 0 0 1-3.8-.9L3 20l1.1-5.3A8.4 8.4 0 1 1 21 11.5Z"/></svg>',
   play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7-11-7Z"/></svg>',
   pdf: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg>',
-  users: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
 };
 
 export const TONE = {
@@ -61,21 +58,11 @@ export const SMARTCLASS_DATA = {
       { id: "materials", label: "Хадгалсан материал", value: 12, delta: "+2 энэ долоо хоногт", tone: "ocean", icon: "download" },
       { id: "avg", label: "Дундаж дүн", value: "90%", delta: "Өнгөрсөн улиралтай харьцуулахад +3%", tone: "forest", icon: "trend" },
     ],
-    teacher: [
-      { id: "courses", label: "Идэвхтэй хичээлүүд", value: 2, delta: "Түүх, Нийгэм", tone: "forest", icon: "book" },
-      { id: "pending", label: "Дүгнэх ажил", value: 4, delta: "1 хугацаа хэтэрсэн", tone: "sun", icon: "clock" },
-      { id: "materials", label: "Байршуулсан материал", value: 8, delta: "+1 энэ долоо хоногт", tone: "ocean", icon: "download" },
-      { id: "students", label: "Нийт сурагч", value: 24, delta: "4 ангид хуваарилагдсан", tone: "forest", icon: "users" },
-    ],
   },
   weeklyActivity: {
     student: [
       { day: "Да", value: 40 }, { day: "Мя", value: 65 }, { day: "Лх", value: 50 },
       { day: "Пү", value: 80 }, { day: "Ба", value: 30 }, { day: "Бя", value: 20 }, { day: "Ня", value: 10 },
-    ],
-    teacher: [
-      { day: "Да", value: 55 }, { day: "Мя", value: 70 }, { day: "Лх", value: 60 },
-      { day: "Пү", value: 90 }, { day: "Ба", value: 45 }, { day: "Бя", value: 25 }, { day: "Ня", value: 15 },
     ],
   },
   activity: [
@@ -118,24 +105,9 @@ export const SMARTCLASS_DATA = {
     { id: "a5", subject: "Түүх", title: "Хүйтэн дайны шалгалт", due: "8-р сарын 10", grade: "12-р анги", status: "done", grade_score: 92, student: "Mönkhbat" },
     { id: "a6", subject: "Нийгэм", title: "Эдийн засгийн эссэ", due: "8-р сарын 6", grade: "11-р анги", status: "done", grade_score: 88, student: "Mönkhbat" },
   ],
-  submissions: [
-    { id: "s1", student: "Mönkhbat", initials: "MB", subject: "Түүх", title: "Дэлхийн 2-р дайны шинжилгээ", submitted: "8-р сарын 15", status: "pending", text: "Дэлхийн 2-р дайн 1939 онд эхэлж, олон улсын харилцаанд гүнзгий өөрчлөлт авчирсан. Энэхүү шинжилгээнд бид дайны шалтгаан, гол үйл явдлуудыг авч үзсэн..." },
-    { id: "s2", student: "Anujin", initials: "AN", subject: "Нийгэм", title: "Иргэний нийгмийн тайлан", submitted: "8-р сарын 15", status: "pending", text: "Иргэний нийгэм гэдэг нь төр, зах зээлээс тусдаа, иргэдийн сайн дурын оролцоонд тулгуурласан байгууллагуудын нийлбэр юм. Энэхүү тайланд..." },
-    { id: "s3", student: "Bilguun", initials: "BL", subject: "Түүх", title: "Чингис хааны тухай эссэ", submitted: "8-р сарын 14", status: "pending", text: "Чингис хаан 1206 онд Монголын нэгдсэн улсыг байгуулж, Дэлхийн түүхэнд томоохон нөлөө үзүүлсэн. Энэхүү эссэд түүний засаглалын аргыг судалсан..." },
-    { id: "s4", student: "Sarnai", initials: "SR", subject: "Нийгэм", title: "Нийгмийн бүтцийн судалгаа", submitted: "8-р сарын 13", status: "graded", grade: 95, feedback: "Маш сайн шинжилгээ, эх сурвалж ашигласан байдал сайн байна.", text: "Нийгмийн бүтэц нь давхарга, анги, бүлгүүдийн харилцан хамаарлаас бүрддэг. Энэхүү судалгаанд орчин үеийн Монголын нийгмийн бүтцийг авч үзсэн..." },
-  ],
-  students: [
-    { id: "st1", name: "Мөнхбат", initials: "MB", grade: "9-р анги", subject: "Түүх", avgGrade: 90, pending: 1 },
-    { id: "st2", name: "Анужин", initials: "AN", grade: "10-р анги", subject: "Нийгэм", avgGrade: 87, pending: 1 },
-    { id: "st3", name: "Билгүүн", initials: "BL", grade: "9-р анги", subject: "Түүх", avgGrade: 82, pending: 1 },
-    { id: "st4", name: "Сарнай", initials: "SR", grade: "8-р анги", subject: "Нийгэм", avgGrade: 95, pending: 0 },
-    { id: "st5", name: "Тэмүүлэн", initials: "TM", grade: "11-р анги", subject: "Түүх", avgGrade: 78, pending: 2 },
-    { id: "st6", name: "Оюунчимэг", initials: "OC", grade: "12-р анги", subject: "Нийгэм", avgGrade: 91, pending: 0 },
-  ],
 };
 
 // State-д зориулсан хуулбар үүсгэх
-state.submissions = SMARTCLASS_DATA.submissions.map((s) => ({ ...s }));
 state.assignments = SMARTCLASS_DATA.assignments.map((a) => ({ ...a }));
 
 /* ----------------------------------------------------------------------
@@ -160,24 +132,5 @@ export const DB = {
   },
   async fetchVideos() {
     return SMARTCLASS_DATA.videos;
-  },
-  async fetchStudents() {
-    return SMARTCLASS_DATA.students;
-  },
-  async uploadLibraryItem(payload) {
-    console.log("[SmartClass] library_items.insert ->", payload);
-    return { ok: true };
-  },
-  async uploadVideo(payload) {
-    console.log("[SmartClass] videos.insert ->", payload);
-    return { ok: true };
-  },
-  async createAssignment(payload) {
-    console.log("[SmartClass] assignments.insert ->", payload);
-    return { ok: true };
-  },
-  async saveGrade(submissionId, grade, feedback) {
-    console.log("[SmartClass] submissions.update ->", { submissionId, grade, feedback });
-    return { ok: true };
   },
 };

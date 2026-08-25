@@ -1,17 +1,17 @@
+/**
+ * ============================================================================
+ *   js/dashboard.js — SmartClass DASHBOARD хуудасны логик (ES Module)
+ * ============================================================================
+ */
+
 import { state, SMARTCLASS_DATA, ICONS, TONE, escapeHTML, DB } from "./app.js";
 import { Charts } from "./charts.js";
 import { Auth } from "./auth.js";
 import { IS_SUPABASE_CONFIGURED } from "./supabase.js";
-import { Auth } from './auth.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const role = await Auth.getCurrentRole();
-  const localRole = localStorage.getItem("smartclass_user_role");
-  
-  if ((role || localRole) === "teacher") {
-    window.location.href = "teacher-dashboard.html";
-  }
-});
+/* ============================================================
+   0) CURRENT USER
+   ============================================================ */
 
 /** "Бат-Эрдэнэ Ганбаатар" -> "БГ" гэх мэт эхний үсгүүдийг гаргана. */
 function getInitials(fullName) {
@@ -23,9 +23,9 @@ function getInitials(fullName) {
 }
 
 /**
- * Бодит нэвтэрсэн хэрэглэгчийн нэр/төрлийг тодорхойлно.
- *   1) Supabase холбогдсон бол Auth.getCurrentUser()-ээс шууд уншина.
- *   2) Үгүй бол (demo горим) auth.js-ийн хадгалсан localStorage утгыг ашиглана.
+ * Бодит нэвтэрсэн хэрэглэгчийн нэрийг тодорхойлно (Үүрэг: ямагт "student").
+ *   1) Supabase холбогдсон бол Auth.getCurrentUser()-ээс уншина.
+ *   2) Үгүй бол (demo горим) localStorage-аас уншина.
  */
 async function loadCurrentUser() {
   if (IS_SUPABASE_CONFIGURED) {
@@ -33,20 +33,18 @@ async function loadCurrentUser() {
       const user = await Auth.getCurrentUser();
       if (user) {
         const name = user.user_metadata?.full_name || user.email?.split('@')[0] || "Хэрэглэгч";
-        const role = user.user_metadata?.role === "teacher" ? "teacher" : "student";
-        return { name, role };
+        return { name, role: "student" };
       }
     } catch (err) {
       console.error("[SmartClass] Хэрэглэгчийн мэдээлэл татахад алдаа гарлаа:", err);
     }
   }
 
-  // Demo горим: index.html дээр бүртгүүлэх/нэвтрэх үед хадгалсан утга
+  // Demo горим
   const storedName = localStorage.getItem("smartclass_user_name");
-  const storedRole = localStorage.getItem("smartclass_user_role");
   return {
     name: storedName || "Зочин хэрэглэгч",
-    role: storedRole === "teacher" ? "teacher" : "student",
+    role: "student",
   };
 }
 
@@ -56,7 +54,7 @@ async function loadCurrentUser() {
 function renderStats() {
   const grid = document.getElementById("statGrid");
   if (!grid) return;
-  const items = SMARTCLASS_DATA.stats[state.role] || [];
+  const items = SMARTCLASS_DATA.stats.student || [];
   grid.innerHTML = items.map((s) => {
     const t = TONE[s.tone] || TONE.ocean;
     return `
@@ -98,9 +96,8 @@ function renderUpNext() {
 
 /** "Долоо хоногийн идэвх" bar chart-ыг js/charts.js ашиглан зурна. */
 function renderWeeklyChart() {
-  const data = SMARTCLASS_DATA.weeklyActivity[state.role] || SMARTCLASS_DATA.weeklyActivity.student;
-  const tone = state.role === "teacher" ? "forest" : "ocean";
-  Charts.renderBarChart("weeklyChart", data, tone);
+  const data = SMARTCLASS_DATA.weeklyActivity.student;
+  Charts.renderBarChart("weeklyChart", data, "ocean");
 }
 
 function populateLibraryFilters() {
@@ -136,9 +133,7 @@ function renderLibrary() {
 
   grid.innerHTML = items.map((b) => {
     const t = TONE[b.tone] || TONE.ocean;
-    const actions = state.role === "teacher"
-      ? `<button class="btn btn--ghost btn--sm" style="flex:1">Засах</button><button class="btn btn--ghost btn--sm" style="flex:1">Устгах</button>`
-      : `<button class="btn btn--primary btn--sm" style="flex:1">Татах</button><button class="btn btn--ghost btn--sm" style="flex:1">Урьдчилан үзэх</button>`;
+    const actions = `<button class="btn btn--primary btn--sm" style="flex:1">Татах</button><button class="btn btn--ghost btn--sm" style="flex:1">Урьдчилан үзэх</button>`;
     return `
       <article class="book-card">
         <div class="book-card__cover" style="background:${t.solid}">
@@ -179,9 +174,7 @@ function renderVideos() {
         <div class="video-card__body">
           <h3 class="video-card__title">${escapeHTML(v.title)}</h3>
           <p class="video-card__teacher">${escapeHTML(v.teacher)} · ${escapeHTML(v.playlist)}</p>
-          ${state.role === "student" ? `
-            <div class="progress-track"><div class="progress-track__fill" style="width:${v.progress}%; background:${t.ink}"></div></div>
-          ` : ""}
+          <div class="progress-track"><div class="progress-track__fill" style="width:${v.progress}%; background:${t.ink}"></div></div>
         </div>
       </article>`;
   }).join("");
@@ -217,94 +210,8 @@ function renderKanban() {
   });
 }
 
-/* ---- Даалгавар: багшийн дүгнэх жагсаалт ---- */
-function renderSubmissions() {
-  const list = document.getElementById("submissionList");
-  if (!list) return;
-  list.innerHTML = state.submissions.map((s) => `
-    <button class="submission-row ${s.id === state.selectedSubmissionId ? "is-selected" : ""}" data-submission="${escapeHTML(s.id)}" type="button">
-      <span class="avatar avatar--sm">${escapeHTML(s.initials)}</span>
-      <span class="submission-row__body">
-        <strong>${escapeHTML(s.student)} · ${escapeHTML(s.title)}</strong>
-        <p>${escapeHTML(s.subject)} · илгээсэн ${escapeHTML(s.submitted)}</p>
-      </span>
-      <span class="status-pill status-pill--${s.status === "graded" ? "graded" : "pending"}">
-        ${s.status === "graded" ? escapeHTML(s.grade) + "/100" : "Хүлээгдэж буй"}
-      </span>
-    </button>`).join("");
-
-  renderGradingPanel();
-}
-
-function renderGradingPanel() {
-  const empty = document.getElementById("gradingEmpty");
-  const form = document.getElementById("gradingForm");
-  const sub = state.submissions.find((s) => s.id === state.selectedSubmissionId);
-
-  if (!sub) {
-    if (empty) empty.hidden = false;
-    if (form) form.hidden = true;
-    return;
-  }
-  if (empty) empty.hidden = true;
-  if (form) form.hidden = false;
-
-  const avatar = document.getElementById("gradeAvatar");
-  const studentName = document.getElementById("gradeStudentName");
-  const assignmentName = document.getElementById("gradeAssignmentName");
-  const submissionText = document.getElementById("gradeSubmissionText");
-  const scoreInput = document.getElementById("gradeScore");
-  const feedbackInput = document.getElementById("gradeFeedback");
-
-  if (avatar) avatar.textContent = sub.initials;
-  if (studentName) studentName.textContent = sub.student;
-  if (assignmentName) assignmentName.textContent = `${sub.subject} · ${sub.title}`;
-  if (submissionText) submissionText.textContent = sub.text;
-  if (scoreInput) scoreInput.value = sub.grade ?? "";
-  if (feedbackInput) feedbackInput.value = sub.feedback ?? "";
-}
-
-/* ---- Сурагчид (багшийн горим) ---- */
-function populateStudentFilters() {
-  const sel = document.getElementById("filterStudentGrade");
-  if (!sel || sel.dataset.populated) return;
-  SMARTCLASS_DATA.grades.forEach((g) => sel.insertAdjacentHTML("beforeend", `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`));
-  sel.dataset.populated = "true";
-}
-
-function renderStudents() {
-  const grid = document.getElementById("studentGrid");
-  if (!grid) return;
-  const gradeFilter = document.getElementById("filterStudentGrade")?.value || "all";
-  const items = SMARTCLASS_DATA.students.filter((s) => gradeFilter === "all" || s.grade === gradeFilter);
-
-  const countEl = document.getElementById("studentCount");
-  if (countEl) countEl.textContent = items.length;
-
-  if (items.length === 0) {
-    grid.innerHTML = `<p style="color:var(--ink-500); grid-column:1/-1;">Энэ ангид сурагч алга байна.</p>`;
-    return;
-  }
-
-  grid.innerHTML = items.map((s) => `
-    <article class="student-card">
-      <span class="avatar">${escapeHTML(s.initials)}</span>
-      <div class="student-card__body">
-        <strong>${escapeHTML(s.name)}</strong>
-        <p>${escapeHTML(s.grade)} · ${escapeHTML(s.subject)}</p>
-      </div>
-      <div class="student-card__stats">
-        <span class="student-card__grade">${escapeHTML(s.avgGrade)}%</span>
-        ${s.pending > 0
-          ? `<span class="status-pill status-pill--pending">${escapeHTML(s.pending)} хийгдээгүй</span>`
-          : `<span class="status-pill status-pill--graded">Бүгд хийсэн</span>`
-        }
-      </div>
-    </article>`).join("");
-}
-
 /* ============================================================
-   2) VIEW / ROLE SWITCHING
+   2) VIEW SWITCHING
    ============================================================ */
 function setView(view) {
   state.activeView = view;
@@ -314,48 +221,21 @@ function setView(view) {
 }
 
 function applyRole() {
-  const isTeacher = state.role === "teacher";
-  document.body.dataset.role = state.role;
-
-  document.querySelectorAll("[data-role]").forEach((el) => {
-    if (el.id === "studentAssignments" || el.id === "teacherAssignments") return;
-    const shouldShow = el.dataset.role === state.role;
-    el.hidden = !shouldShow;
-  });
-
-  const studentAsg = document.getElementById("studentAssignments");
-  const teacherAsg = document.getElementById("teacherAssignments");
-  if (studentAsg) studentAsg.hidden = isTeacher;
-  if (teacherAsg) teacherAsg.hidden = !isTeacher;
+  document.body.dataset.role = "student";
 
   const asgSub = document.getElementById("asgSub");
   if (asgSub) {
-    asgSub.textContent = isTeacher
-      ? "Сурагчдын ажлыг шалгаж, дүн өгнө үү."
-      : "Хийх, хийгдэж буй, дүгнэгдсэн ажлуудаа хянана уу.";
+    asgSub.textContent = "Хийх, хийгдэж буй, дүгнэгдсэн ажлуудаа хянана уу.";
   }
 
-  const roleLabel = isTeacher ? "Багш" : "Сурагч";
   const railRole = document.getElementById("railRole");
-  if (railRole) railRole.textContent = roleLabel;
-
-  document.querySelectorAll(".role-switch__btn").forEach((b) => {
-    const active = b.dataset.role === state.role;
-    b.classList.toggle("is-active", active);
-    b.setAttribute("aria-selected", active);
-  });
-
-  if (!isTeacher && state.activeView === "students") {
-    setView("dashboard");
-  }
+  if (railRole) railRole.textContent = "Сурагч";
 
   renderStats();
   renderLibrary();
   renderVideos();
   renderKanban();
-  renderSubmissions();
   renderWeeklyChart();
-  if (isTeacher) renderStudents();
 }
 
 /* ============================================================
@@ -394,14 +274,6 @@ function bindEvents() {
   });
   scrim?.addEventListener("click", closeSidebarOnMobile);
 
-  document.querySelectorAll(".role-switch__btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      state.role = btn.dataset.role;
-      applyRole();
-      showToast(`Одоо ${state.role === "teacher" ? "Багш" : "Сурагч"} горимоор харж байна`);
-    });
-  });
-
   const notifBtn = document.getElementById("notifBtn");
   notifBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -422,8 +294,6 @@ function bindEvents() {
       renderLibrary();
     });
   });
-
-  document.getElementById("filterStudentGrade")?.addEventListener("change", renderStudents);
 
   document.getElementById("globalSearch")?.addEventListener("input", (e) => {
     state.libraryFilters.q = e.target.value;
@@ -535,40 +405,6 @@ function bindEvents() {
     showToast("Видео хичээл амжилттай нэмэгдлээ");
   });
 
-  /* ---- Ангид даалгавар илгээх modal ---- */
-  const assignmentModalScrim = document.getElementById("assignmentModalScrim");
-  const openAssignmentModal = () => { if (assignmentModalScrim) assignmentModalScrim.hidden = false; };
-  const closeAssignmentModal = () => { if (assignmentModalScrim) assignmentModalScrim.hidden = true; };
-  document.getElementById("newAssignmentBtn")?.addEventListener("click", openAssignmentModal);
-  document.getElementById("assignmentModalClose")?.addEventListener("click", closeAssignmentModal);
-  assignmentModalScrim?.addEventListener("click", (e) => { if (e.target === assignmentModalScrim) closeAssignmentModal(); });
-
-  document.getElementById("assignmentForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const title = document.getElementById("assignTitle").value.trim();
-    if (!title) return;
-    const subject = document.getElementById("assignSubject").value;
-    const grade = document.getElementById("assignGrade").value;
-    const due = document.getElementById("assignDue").value.trim();
-    const instructions = document.getElementById("assignInstructions").value.trim();
-
-    await DB.createAssignment({ title, subject, grade, due, instructions });
-
-    const newAssignment = {
-      id: "a" + Date.now(),
-      subject, title, due, grade,
-      status: "todo",
-      student: "Бүх сурагч",
-    };
-    SMARTCLASS_DATA.assignments.unshift(newAssignment);
-    state.assignments.unshift({ ...newAssignment });
-
-    closeAssignmentModal();
-    e.target.reset();
-    renderKanban();
-    showToast(`«${title}» ${grade}-д амжилттай илгээгдлээ`);
-  });
-
   // Kanban-ын товчнуудад делегацлагдсан сонсогч
   document.getElementById("studentAssignments")?.addEventListener("click", (e) => {
     const toggleBtn = e.target.closest("[data-toggle-submit]");
@@ -587,27 +423,6 @@ function bindEvents() {
       }
     }
   });
-
-  document.getElementById("submissionList")?.addEventListener("click", (e) => {
-    const row = e.target.closest("[data-submission]");
-    if (!row) return;
-    state.selectedSubmissionId = row.dataset.submission;
-    renderSubmissions();
-  });
-
-  document.getElementById("gradingForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const sub = state.submissions.find((s) => s.id === state.selectedSubmissionId);
-    if (!sub) return;
-    const grade = document.getElementById("gradeScore").value;
-    const feedback = document.getElementById("gradeFeedback").value;
-    await DB.saveGrade(sub.id, grade, feedback);
-    sub.status = "graded";
-    sub.grade = grade;
-    sub.feedback = feedback;
-    renderSubmissions();
-    showToast(`${sub.student}-д дүн хадгалагдлаа`);
-  });
 }
 
 /* ============================================================
@@ -620,7 +435,7 @@ async function init() {
     SMARTCLASS_DATA.user.name = currentUser.name;
     SMARTCLASS_DATA.user.initials = getInitials(currentUser.name);
   }
-  state.role = currentUser.role;
+  state.role = "student";
 
   // HTML дээрх нэр харуулах элементүүдэд оноох
   const greetName = document.getElementById("greetName");
@@ -629,7 +444,6 @@ async function init() {
   if (userName) userName.textContent = currentUser.name;
 
   populateLibraryFilters();
-  populateStudentFilters();
   renderActivity();
   renderUpNext();
   renderPlaylistChips();

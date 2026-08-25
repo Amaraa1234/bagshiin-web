@@ -8,7 +8,7 @@ import { supabase, IS_SUPABASE_CONFIGURED } from './supabase.js';
 
 export const Auth = {
   /** 
-   * Шинэ хэрэглэгч бүртгэнэ. Role нь user_metadata-д хадгалагдана.
+   * Шинэ хэрэглэгч бүртгэнэ. Role нь хэрэглэгчийн metadata-д хадгалагдана.
    */
   async signUp(email, password, fullName, role = "student") {
     const { data, error } = await supabase.auth.signUp({
@@ -41,10 +41,10 @@ export const Auth = {
     return session;
   },
 
-  /** "student" эсвэл "teacher" буцаана. Тодорхойгүй бол "student". */
+  /** "student" буцаана. */
   async getCurrentRole() {
     const user = await this.getCurrentUser();
-    return user?.user_metadata?.role === "teacher" ? "teacher" : "student";
+    return user?.user_metadata?.role || "student";
   },
 
   /** Нэвтрэх / гарах / token сэргээх үйл явдал сонсоно. */
@@ -104,15 +104,6 @@ function initAuthPageUI() {
   document.getElementById("switchToRegister")?.addEventListener("click", () => showTab("register"));
   document.getElementById("switchToLogin")?.addEventListener("click", () => showTab("login"));
 
-  // Сонгосон ролийг (Сурагч/Багш) хадгалах
-  document.querySelectorAll(".auth-role-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".auth-role-btn").forEach((b) => b.classList.toggle("is-active", b === btn));
-      const roleInput = document.getElementById("registerRole");
-      if (roleInput) roleInput.value = btn.dataset.role;
-    });
-  });
-
   // ---- Нэвтрэх хэсэг ----
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -125,8 +116,6 @@ function initAuthPageUI() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Нэвтэрч байна…";
     try {
-      let role = "student";
-
       if (!IS_SUPABASE_CONFIGURED) {
         if (!localStorage.getItem("smartclass_user_name")) {
           const derivedName = email
@@ -135,19 +124,13 @@ function initAuthPageUI() {
             .replace(/\b\w/g, (c) => c.toUpperCase());
           localStorage.setItem("smartclass_user_name", derivedName || "Хэрэглэгч");
         }
-        role = localStorage.getItem("smartclass_user_role") || "student";
+        localStorage.setItem("smartclass_user_role", "student");
         await new Promise((resolve) => setTimeout(resolve, 500));
       } else {
         await Auth.signIn(email, password);
-        role = await Auth.getCurrentRole();
       }
 
-      // Ролиос хамаарч тохирох дашборд руу шилжүүлнэ
-      if (role === "teacher") {
-        window.location.href = "teacher-dashboard.html";
-      } else {
-        window.location.href = "dashboard.html";
-      }
+      window.location.href = "dashboard.html";
 
     } catch (err) {
       showMessage(err?.message || "Нэвтрэхэд алдаа гарлаа. Имэйл, нууц үгээ шалгаад дахин оролдоно уу.", "error");
@@ -165,7 +148,6 @@ function initAuthPageUI() {
     const email = document.getElementById("registerEmail").value.trim();
     const password = document.getElementById("registerPassword").value;
     const confirmPassword = document.getElementById("registerConfirm").value;
-    const role = document.getElementById("registerRole")?.value || "student";
     const submitBtn = registerForm.querySelector('button[type="submit"]');
     const originalLabel = submitBtn.textContent;
 
@@ -183,17 +165,13 @@ function initAuthPageUI() {
     try {
       if (!IS_SUPABASE_CONFIGURED) {
         localStorage.setItem("smartclass_user_name", fullName);
-        localStorage.setItem("smartclass_user_role", role);
+        localStorage.setItem("smartclass_user_role", "student");
         await new Promise((resolve) => setTimeout(resolve, 500));
         
-        if (role === "teacher") {
-          window.location.href = "teacher-dashboard.html";
-        } else {
-          window.location.href = "dashboard.html";
-        }
+        window.location.href = "dashboard.html";
         return;
       }
-      await Auth.signUp(email, password, fullName, role);
+      await Auth.signUp(email, password, fullName, "student");
       showMessage("Бүртгэл амжилттай үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.", "success");
       showTab("login");
     } catch (err) {
@@ -206,7 +184,7 @@ function initAuthPageUI() {
 }
 
 /* ----------------------------------------------------------------------
-   C) UI WIRING — dashboard.html болон teacher-dashboard.html (Гарах товч)
+   C) UI WIRING — dashboard.html (Гарах товч)
    ---------------------------------------------------------------------- */
 function initDashboardAuthUI() {
   const logoutBtn = document.getElementById("logoutBtn");

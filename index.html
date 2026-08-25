@@ -99,14 +99,6 @@
           <span>Нууц үг давтах</span>
           <input type="password" id="registerConfirm" placeholder="••••••••" required autocomplete="new-password" />
         </label>
-        <div class="field">
-          <span>Би бол:</span>
-          <div class="auth-role-toggle" role="tablist" aria-label="Хэрэглэгчийн төрөл">
-            <button type="button" class="auth-role-btn is-active" data-role="student">Сурагч</button>
-            <button type="button" class="auth-role-btn" data-role="teacher">Багш</button>
-          </div>
-          <input type="hidden" id="registerRole" value="student" />
-        </div>
         <button type="submit" class="btn btn--primary btn--block">Бүртгүүлэх</button>
       </form>
 
@@ -114,8 +106,10 @@
         <span id="switchToRegisterLine">Шинэ хэрэглэгч үү? <button type="button" id="switchToRegister" class="auth-link">Бүртгүүлэх</button></span>
         <span id="switchToLoginLine" hidden>Аль хэдийн бүртгэлтэй юу? <button type="button" id="switchToLogin" class="auth-link">Нэвтрэх</button></span>
       </p>
+    </div>
   </div>
 </div>
+
 <!-- Скрипт холболт -->
 <script type="module" src="js/supabase.js"></script>
 <script type="module" src="js/auth.js"></script>
