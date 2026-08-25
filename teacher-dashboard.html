@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartClass — Багшийн Дашборд</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <!-- Header / Navbar -->
+    <header class="dashboard-header">
+      <div class="logo">SmartClass <span class="badge">Багш</span></div>
+      <div class="user-profile">
+        <span id="userNameDisplay">Багш</span>
+        <button id="logoutBtn" class="btn btn--secondary">Гарах</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <h1>Багшийн Удирдлагын Хэсэг</h1>
+      
+      <!-- Сул зогсож буй контент рендэрлэх хэсгүүд -->
+      <section class="teacher-stats">
+        <div class="card">
+          <h3>Нийт багц даалгавар</h3>
+          <p id="totalAssignments">0</p>
+        </div>
+        <div class="card">
+          <h3>Ирсэн хариултууд</h3>
+          <p id="totalSubmissions">0</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/supabase.js"></script>
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/teacher-dashboard.js"></script>
+</body>
+</html>

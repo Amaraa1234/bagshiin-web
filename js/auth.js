@@ -125,6 +125,8 @@ function initAuthPageUI() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Нэвтэрч байна…";
     try {
+      let role = "student";
+
       if (!IS_SUPABASE_CONFIGURED) {
         if (!localStorage.getItem("smartclass_user_name")) {
           const derivedName = email
@@ -133,15 +135,20 @@ function initAuthPageUI() {
             .replace(/\b\w/g, (c) => c.toUpperCase());
           localStorage.setItem("smartclass_user_name", derivedName || "Хэрэглэгч");
         }
-        if (!localStorage.getItem("smartclass_user_role")) {
-          localStorage.setItem("smartclass_user_role", "student");
-        }
+        role = localStorage.getItem("smartclass_user_role") || "student";
         await new Promise((resolve) => setTimeout(resolve, 500));
-        window.location.href = "dashboard.html";
-        return;
+      } else {
+        await Auth.signIn(email, password);
+        role = await Auth.getCurrentRole();
       }
-      await Auth.signIn(email, password);
-      window.location.href = "dashboard.html";
+
+      // Ролиос хамаарч тохирох дашборд руу шилжүүлнэ
+      if (role === "teacher") {
+        window.location.href = "teacher-dashboard.html";
+      } else {
+        window.location.href = "dashboard.html";
+      }
+
     } catch (err) {
       showMessage(err?.message || "Нэвтрэхэд алдаа гарлаа. Имэйл, нууц үгээ шалгаад дахин оролдоно уу.", "error");
     } finally {
@@ -178,7 +185,12 @@ function initAuthPageUI() {
         localStorage.setItem("smartclass_user_name", fullName);
         localStorage.setItem("smartclass_user_role", role);
         await new Promise((resolve) => setTimeout(resolve, 500));
-        window.location.href = "dashboard.html";
+        
+        if (role === "teacher") {
+          window.location.href = "teacher-dashboard.html";
+        } else {
+          window.location.href = "dashboard.html";
+        }
         return;
       }
       await Auth.signUp(email, password, fullName, role);
@@ -194,7 +206,7 @@ function initAuthPageUI() {
 }
 
 /* ----------------------------------------------------------------------
-   C) UI WIRING — dashboard.html (Гарах товч)
+   C) UI WIRING — dashboard.html болон teacher-dashboard.html (Гарах товч)
    ---------------------------------------------------------------------- */
 function initDashboardAuthUI() {
   const logoutBtn = document.getElementById("logoutBtn");

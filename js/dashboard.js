@@ -1,17 +1,17 @@
-/**
- * ============================================================================
- *  js/dashboard.js — SmartClass DASHBOARD хуудасны логик (ES Module)
- * ============================================================================
- */
-
 import { state, SMARTCLASS_DATA, ICONS, TONE, escapeHTML, DB } from "./app.js";
 import { Charts } from "./charts.js";
 import { Auth } from "./auth.js";
 import { IS_SUPABASE_CONFIGURED } from "./supabase.js";
+import { Auth } from './auth.js';
 
-/* ============================================================
-   0) CURRENT USER
-   ============================================================ */
+document.addEventListener("DOMContentLoaded", async () => {
+  const role = await Auth.getCurrentRole();
+  const localRole = localStorage.getItem("smartclass_user_role");
+  
+  if ((role || localRole) === "teacher") {
+    window.location.href = "teacher-dashboard.html";
+  }
+});
 
 /** "Бат-Эрдэнэ Ганбаатар" -> "БГ" гэх мэт эхний үсгүүдийг гаргана. */
 function getInitials(fullName) {
