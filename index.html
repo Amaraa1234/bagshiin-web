@@ -1,117 +1,389 @@
+<!-- register.html - Бүртгүүлэх хуудас -->
 <!DOCTYPE html>
 <html lang="mn">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SmartClass — Нэвтрэх</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartClass — Бүртгүүлэх</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/style.css" />
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css" />
 </head>
-<body class="auth-body">
+<body>
 
-<div class="auth-shell">
+<div class="auth-page">
+    <div class="auth-container">
+        <!-- Left side - Branding -->
+        <div class="auth-brand">
+            <div class="auth-brand__content">
+                <div class="auth-logo">
+                    <span class="auth-logo__mark">
+                        <i class="fas fa-graduation-cap"></i>
+                    </span>
+                    <div>
+                        <h1>SmartClass</h1>
+                        <p>Сургалтын систем</p>
+                    </div>
+                </div>
+                <div class="auth-brand__text">
+                    <h2>Шинээр бүртгүүлэх</h2>
+                    <p>Сургалтын системд нэгдэж, мэдлэгээ дээшлүүлээрэй</p>
+                </div>
+                <div class="auth-features">
+                    <div class="auth-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Үнэгүй бүртгэл</span>
+                    </div>
+                    <div class="auth-feature">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Аюулгүй систем</span>
+                    </div>
+                    <div class="auth-feature">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Бүх түвшний сургалт</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <!-- ============ LEFT: Brand / decorative panel ============ -->
-  <div class="auth-visual">
-    <div class="auth-visual__brand">
-      <span class="brand-mark" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" fill="currentColor"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      </span>
-      <span class="brand-name">SmartClass</span>
+        <!-- Right side - Register form -->
+        <div class="auth-form">
+            <div class="auth-form__inner">
+                <h2>Бүртгүүлэх</h2>
+                <p class="auth-form__sub">Доорх мэдээллээ бөглөж бүртгүүлнэ үү</p>
+
+                <form id="registerForm" class="auth-form__fields">
+                    <!-- Бүтэн нэр -->
+                    <div class="field">
+                        <label for="registerName">
+                            <i class="fas fa-user"></i>
+                            Бүтэн нэр
+                        </label>
+                        <input 
+                            type="text" 
+                            id="registerName" 
+                            placeholder="Жишээ: Б.Баяр" 
+                            required 
+                            autocomplete="name"
+                        />
+                    </div>
+
+                    <!-- Имэйл -->
+                    <div class="field">
+                        <label for="registerEmail">
+                            <i class="fas fa-envelope"></i>
+                            Имэйл хаяг
+                        </label>
+                        <input 
+                            type="email" 
+                            id="registerEmail" 
+                            placeholder="jishee@smartclass.mn" 
+                            required 
+                            autocomplete="email"
+                        />
+                    </div>
+
+                    <!-- Нууц үг -->
+                    <div class="field">
+                        <label for="registerPassword">
+                            <i class="fas fa-lock"></i>
+                            Нууц үг
+                        </label>
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                id="registerPassword" 
+                                placeholder="Хамгийн багадаа 6 тэмдэгт" 
+                                required 
+                                autocomplete="new-password"
+                                minlength="6"
+                            />
+                            <button type="button" id="toggleRegisterPassword" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--ink-500); margin-top:4px;">
+                            <i class="fas fa-info-circle"></i> Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой
+                        </div>
+                    </div>
+
+                    <!-- Нууц үг баталгаажуулах -->
+                    <div class="field">
+                        <label for="registerConfirmPassword">
+                            <i class="fas fa-check-circle"></i>
+                            Нууц үг баталгаажуулах
+                        </label>
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                id="registerConfirmPassword" 
+                                placeholder="Нууц үгээ дахин оруулна уу" 
+                                required 
+                                autocomplete="new-password"
+                            />
+                            <button type="button" id="toggleConfirmPassword" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Үүрэг сонгох -->
+                    <div class="field">
+                        <label for="registerRole">
+                            <i class="fas fa-user-tag"></i>
+                            Та хэн бэ?
+                        </label>
+                        <select id="registerRole" required>
+                            <option value="student">Сурагч</option>
+                            <option value="teacher">Багш</option>
+                        </select>
+                    </div>
+
+                    <!-- Анги / Хичээл (student-д зориулав) -->
+                    <div class="field-row" id="studentFields">
+                        <div class="field" style="flex:1;">
+                            <label for="registerGrade">Анги</label>
+                            <select id="registerGrade">
+                                <option value="">Сонгох</option>
+                                <option value="7-р анги">7-р анги</option>
+                                <option value="8-р анги">8-р анги</option>
+                                <option value="9-р анги">9-р анги</option>
+                                <option value="10-р анги">10-р анги</option>
+                                <option value="11-р анги">11-р анги</option>
+                                <option value="12-р анги">12-р анги</option>
+                            </select>
+                        </div>
+                        <div class="field" style="flex:1;">
+                            <label for="registerSubject">Хичээл</label>
+                            <select id="registerSubject">
+                                <option value="">Сонгох</option>
+                                <option value="Математик">Математик</option>
+                                <option value="Физик">Физик</option>
+                                <option value="Англи">Англи</option>
+                                <option value="Хими">Хими</option>
+                                <option value="Мэдээлэл зүй">Мэдээлэл зүй</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Нөхцөл хүлээн зөвшөөрөх -->
+                    <label class="checkbox-label" style="margin:4px 0;">
+                        <input type="checkbox" id="termsCheck" required />
+                        <span class="checkmark"></span>
+                        <span style="font-size:0.85rem; color:var(--ink-700);">
+                            <a href="#" style="color:var(--ocean-500);">Үйлчилгээний нөхцөл</a> болон 
+                            <a href="#" style="color:var(--ocean-500);">нууцлалын бодлогыг</a> уншиж зөвшөөрч байна
+                        </span>
+                    </label>
+
+                    <button type="submit" class="btn btn--primary btn--block" id="registerBtn">
+                        <i class="fas fa-user-plus"></i>
+                        Бүртгүүлэх
+                    </button>
+
+                    <div id="registerError" class="auth-error" style="display: none;"></div>
+                    <div id="registerSuccess" class="auth-success" style="display: none;">
+                        <i class="fas fa-check-circle"></i> Бүртгэл амжилттай! Имэйл хаяг руу баталгаажуулах холбоос илгээгдлээ.
+                    </div>
+
+                    <p class="auth-form__register">
+                        Бүртгэлтэй хэрэглэгч үү?
+                        <a href="index.html">Нэвтрэх</a>
+                    </p>
+                </form>
+            </div>
+        </div>
     </div>
-
-    <div class="auth-visual__body">
-      <h1 class="auth-visual__title">Сургалтаа нэг дороос удирдаарай</h1>
-      <p class="auth-visual__tagline">Багш, сурагч хоёуланд зориулсан ном, видео хичээл, даалгавар, дүнгийн нэгдсэн систем.</p>
-
-      <ul class="auth-visual__points">
-        <li>
-          <span class="point-dot">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
-          </span>
-          Номын сан — бүх хичээлийн материал нэг дор
-        </li>
-        <li>
-          <span class="point-dot">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="2.5" y="5" width="14" height="14" rx="3"/><path d="m21.5 8.5-5 3 5 3v-6Z"/></svg>
-          </span>
-          Видео хичээлүүд, ахицаа хянах боломжтой
-        </li>
-        <li>
-          <span class="point-dot">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-          </span>
-          Даалгавар илгээх, дүн, санал хүсэлт шууд авах
-        </li>
-      </ul>
-    </div>
-
-    <div class="auth-visual__footer">© 2026 SmartClass · Сургалтын систем</div>
-  </div>
-
-  <!-- ============ RIGHT: Login / Register form ============ -->
-  <div class="auth-panel">
-    <div class="auth-card">
-      <div class="auth-card__head">
-        <h1>Тавтай морил</h1>
-        <p>Үргэлжлүүлэхийн тулд нэвтэрнэ үү, эсвэл шинэ бүртгэл үүсгэнэ үү.</p>
-      </div>
-
-      <div class="auth-tabs" role="tablist" aria-label="Нэвтрэх эсвэл бүртгүүлэх">
-        <button class="auth-tab is-active" id="tabLogin" type="button" role="tab" aria-selected="true">Нэвтрэх</button>
-        <button class="auth-tab" id="tabRegister" type="button" role="tab" aria-selected="false">Бүртгүүлэх</button>
-      </div>
-
-      <div class="auth-message" id="authMessage" hidden></div>
-
-      <!-- ---------- Login form ---------- -->
-      <form class="auth-form" id="loginForm">
-        <label class="field">
-          <span>Имэйл хаяг</span>
-          <input type="email" id="loginEmail" placeholder="jishee@mail.mn" required autocomplete="email" />
-        </label>
-        <label class="field">
-          <span>Нууц үг</span>
-          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" />
-        </label>
-        <button type="submit" class="btn btn--primary btn--block">Нэвтрэх</button>
-      </form>
-
-      <!-- ---------- Register form ---------- -->
-      <form class="auth-form" id="registerForm" hidden>
-        <label class="field">
-          <span>Бүтэн нэр</span>
-          <input type="text" id="registerName" placeholder="Овог нэр" required autocomplete="name" />
-        </label>
-        <label class="field">
-          <span>Имэйл хаяг</span>
-          <input type="email" id="registerEmail" placeholder="jishee@mail.mn" required autocomplete="email" />
-        </label>
-        <label class="field">
-          <span>Нууц үг</span>
-          <input type="password" id="registerPassword" placeholder="Дор хаяж 6 тэмдэгт" required autocomplete="new-password" />
-        </label>
-        <label class="field">
-          <span>Нууц үг давтах</span>
-          <input type="password" id="registerConfirm" placeholder="••••••••" required autocomplete="new-password" />
-        </label>
-        <button type="submit" class="btn btn--primary btn--block">Бүртгүүлэх</button>
-      </form>
-
-      <p class="auth-switch-line">
-        <span id="switchToRegisterLine">Шинэ хэрэглэгч үү? <button type="button" id="switchToRegister" class="auth-link">Бүртгүүлэх</button></span>
-        <span id="switchToLoginLine" hidden>Аль хэдийн бүртгэлтэй юу? <button type="button" id="switchToLogin" class="auth-link">Нэвтрэх</button></span>
-      </p>
-    </div>
-  </div>
 </div>
 
-<!-- Скрипт холболт -->
-<script type="module" src="js/supabase.js"></script>
-<script type="module" src="js/auth.js"></script>
+<!-- Toast мэдэгдэл -->
+<div class="toast" id="toast"></div>
+
+<!-- ====== JavaScript ====== -->
+<script type="module">
+    import { supabase } from './js/supabase.js';
+    import Auth from './js/auth.js';
+
+    const registerForm = document.getElementById('registerForm');
+    const registerName = document.getElementById('registerName');
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+    const registerRole = document.getElementById('registerRole');
+    const registerGrade = document.getElementById('registerGrade');
+    const registerSubject = document.getElementById('registerSubject');
+    const registerBtn = document.getElementById('registerBtn');
+    const registerError = document.getElementById('registerError');
+    const registerSuccess = document.getElementById('registerSuccess');
+    const studentFields = document.getElementById('studentFields');
+    const termsCheck = document.getElementById('termsCheck');
+
+    // Toast функц
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.className = 'toast show';
+        toast.style.background = type === 'error' ? '#dc2626' : '#0b3d2e';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Нууц үг харуулах/нуух
+    document.getElementById('toggleRegisterPassword')?.addEventListener('click', () => {
+        const input = registerPassword;
+        const icon = document.querySelector('#toggleRegisterPassword i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    });
+
+    document.getElementById('toggleConfirmPassword')?.addEventListener('click', () => {
+        const input = registerConfirmPassword;
+        const icon = document.querySelector('#toggleConfirmPassword i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    });
+
+    // Үүрэг өөрчлөгдөхөд student fields харуулах/нуух
+    registerRole?.addEventListener('change', function() {
+        if (this.value === 'student') {
+            studentFields.style.display = 'flex';
+        } else {
+            studentFields.style.display = 'none';
+        }
+    });
+
+    // Бүртгүүлэх
+    registerForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Алдаа, амжилтын мэдэгдлийг нуух
+        registerError.style.display = 'none';
+        registerSuccess.style.display = 'none';
+        registerBtn.disabled = true;
+        registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Бүртгүүлж байна...';
+
+        // Утгуудыг авах
+        const name = registerName.value.trim();
+        const email = registerEmail.value.trim();
+        const password = registerPassword.value;
+        const confirmPassword = registerConfirmPassword.value;
+        const role = registerRole.value;
+        const grade = registerGrade.value;
+        const subject = registerSubject.value;
+
+        // 1. Нэр хоосон эсэх
+        if (!name) {
+            registerError.textContent = 'Бүтэн нэрээ оруулна уу';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            return;
+        }
+
+        // 2. Нууц үг тохиролцоо
+        if (password !== confirmPassword) {
+            registerError.textContent = 'Нууц үгүүд тохирохгүй байна';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            return;
+        }
+
+        if (password.length < 6) {
+            registerError.textContent = 'Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            return;
+        }
+
+        // 3. Нөхцөл хүлээн зөвшөөрсөн эсэх
+        if (!termsCheck.checked) {
+            registerError.textContent = 'Үйлчилгээний нөхцөлийг хүлээн зөвшөөрнө үү';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            return;
+        }
+
+        // 4. Сурагчийн хувьд анги, хичээл заавал
+        if (role === 'student' && (!grade || !subject)) {
+            registerError.textContent = 'Сурагчийн хувьд анги, хичээлээ сонгоно уу';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            return;
+        }
+
+        try {
+            // Supabase-д бүртгүүлэх
+            const result = await Auth.signUp(email, password, {
+                full_name: name,
+                role: role,
+                grade: grade,
+                subject: subject
+            });
+
+            if (result.error) {
+                registerError.textContent = result.error;
+                registerError.style.display = 'block';
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+                showToast(result.error, 'error');
+                return;
+            }
+
+            // Амжилттай бүртгүүллээ
+            registerSuccess.style.display = 'block';
+            registerBtn.innerHTML = '<i class="fas fa-check"></i> Амжилттай';
+            showToast('✅ Бүртгэл амжилттай! Имэйлээ баталгаажуулна уу.');
+
+            // Имэйл баталгаажуулалтын дараа нэвтрэх хуудас руу чиглүүлэх
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 3000);
+
+        } catch (error) {
+            console.error('Register error:', error);
+            registerError.textContent = 'Системийн алдаа гарлаа. Дахин оролдоно уу.';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            showToast('❌ Системийн алдаа', 'error');
+        }
+    });
+
+    // Нэвтрэлт шалгах - аль хэдийн нэвтэрсэн бол dashboard руу явуулах
+    (async function checkSession() {
+        const session = await Auth.getSession();
+        if (session) {
+            window.location.href = 'dashboard.html';
+        }
+    })();
+
+    console.log('✅ Register page loaded');
+</script>
+
 </body>
 </html>

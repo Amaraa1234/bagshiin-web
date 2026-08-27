@@ -1,404 +1,475 @@
+<!-- dashboard.html - Хяналтын самбар -->
 <!DOCTYPE html>
 <html lang="mn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartClass — Хяналтын самбар</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartClass — Хяналтын самбар</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css" />
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
 <div class="app-shell">
 
-  <!-- ============ SIDEBAR ============ -->
-  <aside class="sidebar" id="sidebar" aria-label="Үндсэн цэс">
-    <div class="sidebar__brand">
-      <span class="brand-mark" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" fill="currentColor"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      </span>
-      <div class="brand-text">
-        <span class="brand-name">SmartClass</span>
-        <span class="brand-sub">Сургалтын систем</span>
-      </div>
-    </div>
-
-    <nav class="sidebar__nav">
-      <button class="navlink is-active" data-view="dashboard" type="button">
-        <svg class="navlink__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
-        <span class="navlink__label">Хяналтын самбар<em>Ерөнхий тойм</em></span>
-      </button>
-      <button class="navlink" data-view="library" type="button">
-        <svg class="navlink__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
-        <span class="navlink__label">Номын сан<em>Ном, материал</em></span>
-      </button>
-      <button class="navlink" data-view="videos" type="button">
-        <svg class="navlink__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="14" height="14" rx="3"/><path d="m21.5 8.5-5 3 5 3v-6Z"/></svg>
-        <span class="navlink__label">Видео хичээл<em>Бичлэг хичээлүүд</em></span>
-      </button>
-      <button class="navlink" data-view="assignments" type="button">
-        <svg class="navlink__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-        <span class="navlink__label">Даалгавар<em>Дасгал, шалгалт</em></span>
-      </button>
-      <button class="navlink" data-view="students" data-role="teacher" type="button">
-        <svg class="navlink__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span class="navlink__label">Сурагчид<em>Ангиар</em></span>
-      </button>
-    </nav>
-
-    <div class="sidebar__footer">
-      <div class="rail-hint" id="railHint">
-        <span class="rail-dot" aria-hidden="true"></span>
-        <span>Нэвтэрсэн: <strong id="railRole">Сурагч</strong></span>
-      </div>
-      <button class="navlink navlink--ghost" type="button" id="logoutBtn">
-        <svg class="navlink__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
-        <span class="navlink__label">Гарах<em>Системээс гарах</em></span>
-      </button>
-    </div>
-  </aside>
-
-  <div class="sidebar-scrim" id="sidebarScrim"></div>
-
-  <!-- ============ MAIN COLUMN ============ -->
-  <div class="main-col">
-
-    <!-- ============ TOPBAR ============ -->
-    <header class="topbar">
-      <button class="icon-btn topbar__burger" id="burgerBtn" aria-label="Цэс нээх/хаах" type="button">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-      </button>
-
-      <label class="searchbar" for="globalSearch">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="globalSearch" type="text" placeholder="Ном, хичээл, даалгавар хайх…" autocomplete="off" />
-      </label>
-
-      <div class="topbar__actions">
-
-        <!-- Role switcher -->
-        <div class="role-switch" role="tablist" aria-label="Харах горим">
-          <button class="role-switch__btn is-active" data-role="student" role="tab" aria-selected="true" type="button">Сурагч</button>
-          <button class="role-switch__btn" data-role="teacher" role="tab" aria-selected="false" type="button">Багш</button>
-        </div>
-
-        <!-- Notifications -->
-        <div class="popover-wrap">
-          <button class="icon-btn" id="notifBtn" aria-haspopup="true" aria-expanded="false" aria-label="Мэдэгдэл">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-            <span class="badge" id="notifBadge">3</span>
-          </button>
-          <div class="popover" id="notifPopover" hidden>
-            <div class="popover__head">Мэдэгдэл <em>Сүүлийн үеийн</em></div>
-            <ul class="notif-list">
-              <li><span class="notif-dot notif-dot--sun"></span><div><strong>Дүн орлоо</strong><p>Хүйтэн дайны шалгалт дүгнэгдлээ.</p></div></li>
-              <li><span class="notif-dot notif-dot--ocean"></span><div><strong>Шинэ хичээл нэмэгдлээ</strong><p>«Иргэний нийгмийн үндэс» видео хичээл нийтлэгдлээ.</p></div></li>
-              <li><span class="notif-dot notif-dot--forest"></span><div><strong>Маргааш дуусна</strong><p>Иргэний нийгмийн тайлан.</p></div></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- ============ VIEWS ============ -->
-    <main class="views">
-
-      <!-- ---------- DASHBOARD ---------- -->
-      <section class="view is-active" data-view="dashboard" aria-labelledby="dashTitle">
-        <div class="view__head">
-          <h1 id="dashTitle">Өдрийн мэнд, <span id="greetName">Хэрэглэгч</span> <em>Өнөөдрийн тойм</em></h1>
-          <p class="view__sub">Өнөөдөр таны хичээлүүдэд юу болж байгааг эндээс харна уу.</p>
-        </div>
-
-        <div class="stat-grid" id="statGrid"></div>
-
-        <div class="split-grid">
-          <div class="panel">
-            <div class="panel__head">
-              <h2>Сүүлийн үйл ажиллагаа <em>Түүхэн бүртгэл</em></h2>
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar" aria-label="Үндсэн цэс">
+        <div class="sidebar__brand">
+            <span class="brand-mark">
+                <i class="fas fa-graduation-cap"></i>
+            </span>
+            <div class="brand-text">
+                <span class="brand-name">SmartClass</span>
+                <span class="brand-sub">Сургалтын систем</span>
             </div>
-            <ul class="activity-feed" id="activityFeed"></ul>
-          </div>
+        </div>
 
-          <div class="panel">
-            <div class="panel__head">
-              <h2>Дараагийн ажлууд <em>Товч хуанли</em></h2>
+        <nav class="sidebar__nav">
+            <button class="navlink is-active" data-view="dashboard" type="button">
+                <i class="fas fa-th-large navlink__icon"></i>
+                <span class="navlink__label">Хяналтын самбар<em>Ерөнхий тойм</em></span>
+            </button>
+            <button class="navlink" data-view="library" type="button">
+                <i class="fas fa-book navlink__icon"></i>
+                <span class="navlink__label">Номын сан<em>Ном, материал</em></span>
+            </button>
+            <button class="navlink" data-view="videos" type="button">
+                <i class="fas fa-video navlink__icon"></i>
+                <span class="navlink__label">Видео хичээл<em>Бичлэг хичээлүүд</em></span>
+            </button>
+            <button class="navlink" data-view="assignments" type="button">
+                <i class="fas fa-tasks navlink__icon"></i>
+                <span class="navlink__label">Даалгавар<em>Дасгал, шалгалт</em></span>
+            </button>
+        </nav>
+
+        <div class="sidebar__footer">
+            <div class="rail-hint">
+                <span class="rail-dot"></span>
+                <span>Нэвтэрсэн: <strong id="railUserName">Ачаалж байна...</strong></span>
             </div>
-            <ul class="upnext-list" id="upNextList"></ul>
-          </div>
+            <button class="navlink navlink--ghost" type="button" id="logoutBtn">
+                <i class="fas fa-sign-out-alt navlink__icon"></i>
+                <span class="navlink__label">Гарах<em>Системээс гарах</em></span>
+            </button>
         </div>
+    </aside>
 
-        <div class="panel panel--chart">
-          <div class="panel__head">
-            <h2>Долоо хоногийн идэвх <em>7 хоногийн тойм</em></h2>
-          </div>
-          <div id="weeklyChart" class="chart-container"></div>
-        </div>
-      </section>
+    <div class="sidebar-scrim" id="sidebarScrim"></div>
 
-      <!-- ---------- LIBRARY ---------- -->
-      <section class="view" data-view="library" aria-labelledby="libTitle">
-        <div class="view__head view__head--row">
-          <h1 id="libTitle">Номын сан</h1>
-          <button class="btn btn--primary" id="uploadBookBtn" data-role="teacher">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-            Материал байршуулах
-          </button>
-        </div>
+    <!-- ============ MAIN COLUMN ============ -->
+    <div class="main-col">
 
-        <div class="filter-row">
-          <select id="filterSubject" class="select"><option value="all">Хичээл</option></select>
-          <select id="filterGrade" class="select"><option value="all">Бүх анги</option></select>
-          <div class="filter-row__count"><span id="libCount">0</span> материал</div>
-        </div>
+        <!-- ============ TOPBAR ============ -->
+        <header class="topbar">
+            <button class="topbar__burger" id="burgerBtn" aria-label="Цэс нээх/хаах" type="button">
+                <i class="fas fa-bars"></i>
+            </button>
 
-        <div class="card-grid" id="libraryGrid"></div>
-      </section>
-
-      <!-- ---------- VIDEO LESSONS ---------- -->
-      <section class="view" data-view="videos" aria-labelledby="vidTitle">
-        <div class="view__head view__head--row">
-          <div>
-            <h1 id="vidTitle">Видео хичээл <em>Үзэх, дадлагажих</em></h1>
-            <p class="view__sub">Тоглуулах жагсаалтаараа хичээлээ үзэж, ахицаа хянаарай.</p>
-          </div>
-          <button class="btn btn--primary" id="uploadVideoBtn" data-role="teacher">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-            Видео байршуулах
-          </button>
-        </div>
-
-        <div class="chip-row" id="playlistChips"></div>
-        <div class="card-grid card-grid--video" id="videoGrid"></div>
-      </section>
-
-      <!-- ---------- ASSIGNMENTS ---------- -->
-      <section class="view" data-view="assignments" aria-labelledby="asgTitle">
-        <div class="view__head view__head--row">
-          <div>
-            <h1 id="asgTitle">Даалгавар ба дасгал ажил <em>Гүйцэтгэлийн жагсаалт</em></h1>
-            <p class="view__sub" id="asgSub">Хийх ёстой, хийгдэж буй, дүгнэгдсэн ажлуудаа хянана уу.</p>
-          </div>
-          <button class="btn btn--primary" id="newAssignmentBtn" data-role="teacher">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-            Ангид даалгавар илгээх
-          </button>
-        </div>
-
-        <!-- STUDENT: kanban -->
-        <div id="studentAssignments" data-role="student">
-          <div class="kanban">
-            <div class="kanban__col" data-status="todo">
-              <h3 class="kanban__title"><span class="dot dot--ocean"></span>Хийх ёстой <em>Шинэ</em></h3>
-              <div class="kanban__list" id="col-todo"></div>
+            <div class="search-wrapper">
+                <label class="searchbar">
+                    <i class="fas fa-search" style="color: var(--ink-300);"></i>
+                    <input id="globalSearch" type="text" placeholder="Ном, хичээл, даалгавар хайх… (Ctrl+K)" autocomplete="off" />
+                    <button type="button" id="clearSearchBtn" class="clear-search-btn"><i class="fas fa-times"></i></button>
+                </label>
+                <div id="searchResultsDropdown" class="search-results-dropdown"></div>
             </div>
-            <div class="kanban__col" data-status="progress">
-              <h3 class="kanban__title"><span class="dot dot--sun"></span>Хийгдэж буй <em>Явцад</em></h3>
-              <div class="kanban__list" id="col-progress"></div>
-            </div>
-            <div class="kanban__col" data-status="done">
-              <h3 class="kanban__title"><span class="dot dot--forest"></span>Дууссан <em>Дүгнэгдсэн</em></h3>
-              <div class="kanban__list" id="col-done"></div>
-            </div>
-          </div>
-        </div>
 
-        <!-- TEACHER: grading queue -->
-        <div id="teacherAssignments" data-role="teacher" hidden>
-          <div class="split-grid split-grid--wide">
-            <div class="panel">
-              <div class="panel__head">
-                <h2>Шалгах ажлууд <em>Ирсэн даалгавар</em></h2>
-              </div>
-              <ul class="submission-list" id="submissionList"></ul>
-            </div>
-            <div class="panel" id="gradingPanel">
-              <div class="panel__head"><h2>Дүн ба санал хүсэлт <em>Үнэлгээ</em></h2></div>
-              <div class="grading-empty" id="gradingEmpty">
-                <p>Сурагчийн ажлыг харж, дүн өгөхийн тулд жагсаалтаас нэгийг сонгоно уу.</p>
-              </div>
-              <form class="grading-form" id="gradingForm" hidden>
-                <div class="grading-form__student">
-                  <span class="avatar avatar--sm" id="gradeAvatar">—</span>
-                  <div>
-                    <strong id="gradeStudentName">—</strong>
-                    <p id="gradeAssignmentName">—</p>
-                  </div>
+            <div class="topbar__actions">
+                <button class="icon-btn" type="button" aria-label="Мэдэгдэл" id="notifBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notifBadge">3</span>
+                </button>
+                <div class="profile-chip">
+                    <span class="avatar" id="userAvatar">СА</span>
+                    <div class="profile-chip__text">
+                        <strong id="topbarUserName">Ачаалж байна...</strong>
+                        <em id="userRoleLabel">Багш</em>
+                    </div>
                 </div>
-                <div class="grading-form__submission" id="gradeSubmissionText"></div>
-                <label class="field">
-                  <span>Дүн <em>(100-аас)</em></span>
-                  <input type="number" min="0" max="100" id="gradeScore" placeholder="жишээ нь: 92" />
-                </label>
-                <label class="field">
-                  <span>Санал хүсэлт <em>Тайлбар</em></span>
-                  <textarea id="gradeFeedback" rows="4" placeholder="Сурагчид зориулсан санал бичнэ үү…"></textarea>
-                </label>
-                <button type="submit" class="btn btn--primary btn--block">Дүн хадгалж, сурагчид мэдэгдэх</button>
-              </form>
             </div>
-          </div>
-        </div>
-      </section>
+        </header>
 
-      <!-- ---------- STUDENTS (teacher only) ---------- -->
-      <section class="view" data-view="students" aria-labelledby="stuTitle">
-        <div class="view__head">
-          <h1 id="stuTitle">Сурагчид <em>Ангиар</em></h1>
-          <p class="view__sub">Ангиараа хуваарилагдсан сурагчдын мэдээлэл, дундаж дүн, хийгдээгүй ажил.</p>
-        </div>
+        <!-- ============ VIEWS ============ -->
+        <main class="views">
 
-        <div class="filter-row">
-          <select id="filterStudentGrade" class="select"><option value="all">Бүх анги</option></select>
-          <div class="filter-row__count"><span id="studentCount">0</span> сурагч</div>
-        </div>
+            <!-- ---------- DASHBOARD ---------- -->
+            <section class="view is-active" data-view="dashboard" aria-labelledby="dashTitle">
+                <div class="view__head">
+                    <h1 id="dashTitle">Өдрийн мэнд, <span id="greetName">Ачаалж байна...</span> <em>Өнөөдрийн тойм</em></h1>
+                </div>
 
-        <div class="student-grid" id="studentGrid"></div>
-      </section>
+                <!-- Stat cards -->
+                <div class="stat-grid">
+                    <div class="stat-card" style="--tint: #e3f6ec; --tint-ink: #0f7a52;">
+                        <div class="stat-card__icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-card__value" id="statStudents">-</div>
+                        <div class="stat-card__label">Нийт сурагч</div>
+                    </div>
+                    <div class="stat-card" style="--tint: #e6f3fb; --tint-ink: #185f8c;">
+                        <div class="stat-card__icon"><i class="fas fa-book-open"></i></div>
+                        <div class="stat-card__value" id="statCourses">-</div>
+                        <div class="stat-card__label">Идэвхтэй хичээл</div>
+                    </div>
+                    <div class="stat-card" style="--tint: #fff3d3; --tint-ink: #dc9a05;">
+                        <div class="stat-card__icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-card__value" id="statPending">-</div>
+                        <div class="stat-card__label">Шалгах даалгавар</div>
+                    </div>
+                    <div class="stat-card" style="--tint: #f0f0f0; --tint-ink: #33454b;">
+                        <div class="stat-card__icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-card__value" id="statCompleted">-</div>
+                        <div class="stat-card__label">Дууссан даалгавар</div>
+                    </div>
+                </div>
 
-    </main>
-  </div>
-</div>
+                <div class="split-grid">
+                    <!-- Profile panel -->
+                    <div class="panel">
+                        <div class="panel__head">
+                            <h2>Хувийн мэдээлэл <em>Профайл</em></h2>
+                            <span class="badge" style="position:static; background:var(--forest-100); color:var(--forest-700);" id="profileRoleBadge">Багш</span>
+                        </div>
+                        <form id="profileForm" style="display:flex; flex-direction:column; gap:14px;">
+                            <div class="profile-avatar-upload">
+                                <img id="profileAvatarPreview" src="https://ui-avatars.com/api/?name=Хэрэглэгч&background=0f7a52&color=fff&size=70" alt="Профайл зураг" />
+                                <label class="btn btn--ghost btn--sm" style="cursor:pointer;">
+                                    <i class="fas fa-camera"></i> Зураг солих
+                                    <input type="file" id="profileImageInput" accept="image/*" hidden />
+                                </label>
+                            </div>
+                            <label class="field">
+                                <span>Бүтэн нэр</span>
+                                <input type="text" id="profileName" placeholder="Таны бүтэн нэр" required />
+                            </label>
+                            <div class="field-row">
+                                <label class="field" style="flex:1;">
+                                    <span>Нас</span>
+                                    <input type="number" id="profileAge" min="1" max="100" placeholder="Нас" />
+                                </label>
+                                <label class="field" style="flex:1;">
+                                    <span>Хүйс</span>
+                                    <select id="profileGender">
+                                        <option value="">Сонгох</option>
+                                        <option value="Эрэгтэй">Эрэгтэй</option>
+                                        <option value="Эмэгтэй">Эмэгтэй</option>
+                                        <option value="Бусад">Бусад</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <label class="field">
+                                <span>Утас</span>
+                                <input type="tel" id="profilePhone" placeholder="99112233" />
+                            </label>
+                            <label class="field">
+                                <span>Имэйл</span>
+                                <input type="email" id="profileEmail" placeholder="jishee@smartclass.mn" required />
+                            </label>
+                            <button type="submit" class="btn btn--primary btn--block">
+                                <i class="fas fa-save"></i> Мэдээлэл хадгалах
+                            </button>
+                        </form>
+                    </div>
 
-<!-- ============ UPLOAD MODAL: material (teacher) ============ -->
-<div class="modal-scrim" id="modalScrim" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal__head">
-      <h2 id="modalTitle">Материал байршуулах <em>Шинэ файл нэмэх</em></h2>
-      <button class="icon-btn" id="modalClose" aria-label="Хаах">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
-      </button>
+                    <!-- Activity feed -->
+                    <div class="panel">
+                        <div class="panel__head">
+                            <h2>Сүүлийн үйлдлүүд <em>Идэвх</em></h2>
+                        </div>
+                        <ul class="activity-feed" id="activityFeed">
+                            <li style="color:var(--ink-500);">Ачаалж байна...</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="split-grid" style="margin-top:18px;">
+                    <div class="panel panel--chart">
+                        <div class="panel__head">
+                            <h2>Сарын идэвх <em>График</em></h2>
+                        </div>
+                        <canvas id="barChart" width="500" height="200"></canvas>
+                    </div>
+                    <div class="panel panel--chart">
+                        <div class="panel__head">
+                            <h2>Категорийн хуваарилалт <em>Диаграм</em></h2>
+                        </div>
+                        <canvas id="doughnutChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ---------- LIBRARY ---------- -->
+            <section class="view" data-view="library" aria-labelledby="libTitle">
+                <div class="view__head">
+                    <h1 id="libTitle">Номын сан <em>Бүх материал</em></h1>
+                    <button class="btn btn--primary" id="uploadBookBtn">
+                        <i class="fas fa-upload"></i> Материал байршуулах
+                    </button>
+                </div>
+                <div class="filter-row">
+                    <select id="filterSubject" class="select">
+                        <option value="all">Бүх хичээл</option>
+                        <option value="math">Математик</option>
+                        <option value="physics">Физик</option>
+                        <option value="english">Англи</option>
+                        <option value="chemistry">Хими</option>
+                    </select>
+                    <select id="filterGrade" class="select">
+                        <option value="all">Бүх анги</option>
+                        <option value="9">9-р анги</option>
+                        <option value="10">10-р анги</option>
+                        <option value="11">11-р анги</option>
+                        <option value="12">12-р анги</option>
+                    </select>
+                    <span style="font-size:0.85rem; color:var(--ink-500);">
+                        <span id="libCount">0</span> материал
+                    </span>
+                </div>
+                <div class="card-grid" id="libraryGrid">
+                    <!-- JavaScript-ээр дүүргэнэ -->
+                </div>
+            </section>
+
+            <!-- ---------- VIDEO LESSONS ---------- -->
+            <section class="view" data-view="videos" aria-labelledby="vidTitle">
+                <div class="view__head">
+                    <div>
+                        <h1 id="vidTitle">Видео хичээл <em>Үзэх, дадлагажих</em></h1>
+                        <p class="view__sub">Тоглуулах жагсаалтаараа хичээлээ үзэж, ахицаа хянаарай.</p>
+                    </div>
+                    <button class="btn btn--primary" id="uploadVideoBtn">
+                        <i class="fas fa-upload"></i> Видео байршуулах
+                    </button>
+                </div>
+                <div class="chip-row" id="playlistChips">
+                    <button class="chip is-active" data-category="all">Бүгд</button>
+                    <button class="chip" data-category="math">Математик</button>
+                    <button class="chip" data-category="physics">Физик</button>
+                    <button class="chip" data-category="english">Англи</button>
+                    <button class="chip" data-category="chemistry">Хими</button>
+                </div>
+                <div class="card-grid" id="videoGrid">
+                    <!-- JavaScript-ээр дүүргэнэ -->
+                </div>
+            </section>
+
+            <!-- ---------- ASSIGNMENTS ---------- -->
+            <section class="view" data-view="assignments" aria-labelledby="asgTitle">
+                <div class="view__head">
+                    <div>
+                        <h1 id="asgTitle">Даалгавар ба дасгал ажил <em>Гүйцэтгэлийн жагсаалт</em></h1>
+                        <p class="view__sub" id="asgSub">Хийх ёстой, хийгдэж буй, дүгнэгдсэн ажлуудаа хянана уу.</p>
+                    </div>
+                    <button class="btn btn--primary" id="newAssignmentBtn">
+                        <i class="fas fa-plus"></i> Шинэ даалгавар
+                    </button>
+                </div>
+
+                <div class="kanban" id="kanbanBoard">
+                    <div class="kanban__col" data-status="todo">
+                        <h3 class="kanban__title"><span class="dot dot--ocean"></span>Хийх ёстой <em>Шинэ</em></h3>
+                        <div class="kanban__list" id="col-todo"></div>
+                    </div>
+                    <div class="kanban__col" data-status="progress">
+                        <h3 class="kanban__title"><span class="dot dot--sun"></span>Хийгдэж буй <em>Явцад</em></h3>
+                        <div class="kanban__list" id="col-progress"></div>
+                    </div>
+                    <div class="kanban__col" data-status="done">
+                        <h3 class="kanban__title"><span class="dot dot--forest"></span>Дууссан <em>Дүгнэгдсэн</em></h3>
+                        <div class="kanban__list" id="col-done"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
     </div>
-    <form class="modal__body" id="uploadForm">
-      <div class="dropzone" id="dropzone">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        <p><strong>Дарж байршуулах</strong> эсвэл чирж оруулна уу</p>
-        <span>PDF, EPUB, 25MB хүртэл</span>
-        <input type="file" id="fileInput" accept=".pdf,.epub" hidden />
-        <span class="dropzone__filename" id="dropFilename"></span>
-      </div>
-      <label class="field">
-        <span>Гарчиг</span>
-        <input type="text" id="uploadTitle" placeholder="жишээ нь: Чингис хааны эпох" required />
-      </label>
-      <div class="field-row">
-        <label class="field">
-          <span>Хичээл</span>
-          <select id="uploadSubject">
-            <option>Түүх</option><option>Нийгэм</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Ангийн түвшин</span>
-          <select id="uploadGrade">
-            <option>7-р анги</option><option>8-р анги</option><option>9-р анги</option>
-            <option>10-р анги</option><option>11-р анги</option><option>12-р анги</option>
-          </select>
-        </label>
-      </div>
-      <button type="submit" class="btn btn--primary btn--block">Номын санд нийтлэх</button>
-    </form>
-  </div>
-</div>
-
-<!-- ============ UPLOAD MODAL: video (teacher) ============ -->
-<div class="modal-scrim" id="videoModalScrim" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="videoModalTitle">
-    <div class="modal__head">
-      <h2 id="videoModalTitle">Видео байршуулах <em>Шинэ хичээл нэмэх</em></h2>
-      <button class="icon-btn" id="videoModalClose" aria-label="Хаах">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
-      </button>
-    </div>
-    <form class="modal__body" id="videoUploadForm">
-      <div class="dropzone" id="videoDropzone">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 7l-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-        <p><strong>Дарж байршуулах</strong> эсвэл чирж оруулна уу</p>
-        <span>MP4, MOV 500MB хүртэл</span>
-        <input type="file" id="videoFileInput" accept="video/*" hidden />
-        <span class="dropzone__filename" id="videoDropFilename"></span>
-      </div>
-      <label class="field">
-        <span>Гарчиг</span>
-        <input type="text" id="videoTitle" placeholder="жишээ нь: Дэлхийн 2-р дайн" required />
-      </label>
-      <div class="field-row">
-        <label class="field">
-          <span>Хичээл</span>
-          <select id="videoSubject">
-            <option>Түүх</option><option>Нийгэм</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Ангийн түвшин</span>
-          <select id="videoGrade">
-            <option>7-р анги</option><option>8-р анги</option><option>9-р анги</option>
-            <option>10-р анги</option><option>11-р анги</option><option>12-р анги</option>
-          </select>
-        </label>
-      </div>
-      <button type="submit" class="btn btn--primary btn--block">Видео хичээл нийтлэх</button>
-    </form>
-  </div>
-</div>
-
-<!-- ============ NEW ASSIGNMENT MODAL (teacher) ============ -->
-<div class="modal-scrim" id="assignmentModalScrim" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
-    <div class="modal__head">
-      <h2 id="assignmentModalTitle">Ангид даалгавар илгээх <em>Шинэ даалгавар</em></h2>
-      <button class="icon-btn" id="assignmentModalClose" aria-label="Хаах">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
-      </button>
-    </div>
-    <form class="modal__body" id="assignmentForm">
-      <label class="field">
-        <span>Даалгаврын гарчиг</span>
-        <input type="text" id="assignTitle" placeholder="жишээ нь: Чингис хааны тухай эссэ" required />
-      </label>
-      <div class="field-row">
-        <label class="field">
-          <span>Хичээл</span>
-          <select id="assignSubject">
-            <option>Түүх</option><option>Нийгэм</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Илгээх анги</span>
-          <select id="assignGrade">
-            <option>7-р анги</option><option>8-р анги</option><option>9-р анги</option>
-            <option>10-р анги</option><option>11-р анги</option><option>12-р анги</option>
-          </select>
-        </label>
-      </div>
-      <label class="field">
-        <span>Хугацаа</span>
-        <input type="text" id="assignDue" placeholder="жишээ нь: 8-р сарын 30" required />
-      </label>
-      <label class="field">
-        <span>Заавар <em>(заавал биш)</em></span>
-        <textarea id="assignInstructions" rows="3" placeholder="Даалгаврын дэлгэрэнгүй заавар…"></textarea>
-      </label>
-      <button type="submit" class="btn btn--primary btn--block">Ангид илгээх</button>
-    </form>
-  </div>
 </div>
 
 <!-- ============ TOAST ============ -->
-<div class="toast" id="toast" hidden></div>
+<div class="toast" id="toast"></div>
 
-<!-- Скрипт холболтууд -->
-<script type="module" src="js/dashboard.js"></script>
+<!-- ============ JAVASCRIPT ============ -->
 <script type="module">
-  import { Auth } from "./js/auth.js";
-  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-    await Auth.signOut();
-    window.location.href = "index.html";
-  });
+    import { supabase } from './js/supabase.js';
+    import Auth from './js/auth.js';
+    import App from './js/app.js';
+    import Dashboard from './js/dashboard.js';
+    import Charts from './js/charts.js';
+
+    // ----- 1. AUTH GUARD -----
+    (async function checkAuth() {
+        const session = await Auth.getSession();
+        if (!session) {
+            window.location.href = 'index.html';
+        }
+    })();
+
+    // ----- 2. APP INIT -----
+    const app = new App();
+    await app.init();
+
+    // ----- 3. DASHBOARD INIT -----
+    const dashboard = new Dashboard();
+    await dashboard.init();
+
+    // ----- 4. CHARTS -----
+    // Bar chart
+    const barData = [
+        { label: '1-р сар', value: 12 },
+        { label: '2-р сар', value: 19 },
+        { label: '3-р сар', value: 8 },
+        { label: '4-р сар', value: 15 },
+        { label: '5-р сар', value: 22 },
+        { label: '6-р сар', value: 18 }
+    ];
+    Charts.drawBarChart('barChart', barData, {
+        rounded: true,
+        colorStart: '#0f7a52',
+        colorEnd: '#1ba372'
+    });
+
+    // Doughnut chart
+    const doughnutData = [
+        { label: 'Математик', value: 30 },
+        { label: 'Физик', value: 25 },
+        { label: 'Англи', value: 20 },
+        { label: 'Бусад', value: 25 }
+    ];
+    Charts.drawDoughnutChart('doughnutChart', doughnutData, {
+        showLabels: true,
+        colors: ['#0f7a52', '#2f8fd1', '#f5b90c', '#8b5cf6']
+    });
+
+    // ----- 5. SIDEBAR TOGGLE (mobile) -----
+    const sidebar = document.getElementById('sidebar');
+    const burgerBtn = document.getElementById('burgerBtn');
+    const scrim = document.getElementById('sidebarScrim');
+
+    burgerBtn?.addEventListener('click', () => {
+        sidebar?.classList.toggle('is-open');
+        if (scrim) scrim.style.display = sidebar?.classList.contains('is-open') ? 'block' : 'none';
+    });
+
+    scrim?.addEventListener('click', () => {
+        sidebar?.classList.remove('is-open');
+        scrim.style.display = 'none';
+    });
+
+    // ----- 6. NAVIGATION -----
+    document.querySelectorAll('.navlink[data-view]').forEach(link => {
+        link.addEventListener('click', function() {
+            const view = this.dataset.view;
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('is-active'));
+            const target = document.querySelector(`.view[data-view="${view}"]`);
+            if (target) target.classList.add('is-active');
+            document.querySelectorAll('.navlink[data-view]').forEach(l => l.classList.remove('is-active'));
+            this.classList.add('is-active');
+            sidebar?.classList.remove('is-open');
+            if (scrim) scrim.style.display = 'none';
+        });
+    });
+
+    // ----- 7. CHIP FILTERS (videos) -----
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('is-active'));
+            this.classList.add('is-active');
+            const category = this.dataset.category;
+            // Filter videos (demo)
+            const videos = document.querySelectorAll('#videoGrid .video-card');
+            videos.forEach(video => {
+                const cat = video.dataset.category || 'all';
+                video.style.display = (category === 'all' || cat === category) ? 'block' : 'none';
+            });
+            app.showToast(`🎥 "${this.textContent}" ангилал сонгогдлоо`);
+        });
+    });
+
+    // ----- 8. SEARCH -----
+    const searchInput = document.getElementById('globalSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const dropdown = document.getElementById('searchResultsDropdown');
+
+    searchInput?.addEventListener('input', async (e) => {
+        const query = e.target.value.trim();
+        clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+        
+        if (query.length < 2) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        // Search from Supabase
+        try {
+            const { data, error } = await supabase
+                .from('books')
+                .select('id, title, type')
+                .ilike('title', `%${query}%`)
+                .limit(5);
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                dropdown.innerHTML = '<div class="search-item" style="color:var(--ink-500);">Илэрц олдсонгүй</div>';
+            } else {
+                dropdown.innerHTML = data.map(item => `
+                    <div class="search-item" data-id="${item.id}">
+                        <i class="fas fa-${item.type === 'video' ? 'video' : 'book'}" style="color:var(--ink-300);"></i>
+                        <div class="search-item__info">
+                            <span class="search-item__title">${item.title}</span>
+                            <span class="search-item__type">${item.type || 'Ном'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            dropdown.style.display = 'block';
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+    });
+
+    clearBtn?.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        dropdown.style.display = 'none';
+        searchInput.focus();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrapper')) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Ctrl+K shortcut
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput?.focus();
+        }
+    });
+
+    // ----- 9. LOGOUT -----
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        await Auth.signOut();
+        app.showToast('👋 Амжилттай гарлаа');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 500);
+    });
+
+    console.log('✅ SmartClass Dashboard амжилттай ажиллаж байна!');
 </script>
+
 </body>
 </html>

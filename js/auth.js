@@ -1,211 +1,228 @@
+// ============================================================
+// js/auth.js - Хэрэглэгчийн нэвтрэлт, бүртгэл, гарах функцууд
+// ============================================================
+import { supabase } from './supabase.js';
+
 /**
- * ============================================================================
- *   js/auth.js — Нэвтрэх / Бүртгүүлэх / Гарах (ES Module)
- * ============================================================================
+ * Auth класс - бүх нэвтрэлттэй холбоотой үйлдлүүд
  */
-
-import { supabase, IS_SUPABASE_CONFIGURED } from './supabase.js';
-
-export const Auth = {
-  /** 
-   * Шинэ хэрэглэгч бүртгэнэ. Role нь хэрэглэгчийн metadata-д хадгалагдана.
-   */
-  async signUp(email, password, fullName, role = "student") {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName, role } },
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  async signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
-  },
-
-  async signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  },
-
-  async getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
-  },
-
-  async getCurrentSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
-  },
-
-  /** "student" буцаана. */
-  async getCurrentRole() {
-    const user = await this.getCurrentUser();
-    return user?.user_metadata?.role || "student";
-  },
-
-  /** Нэвтрэх / гарах / token сэргээх үйл явдал сонсоно. */
-  onAuthStateChange(callback) {
-    return supabase.auth.onAuthStateChange((event, session) => callback(event, session));
-  },
-};
-
-// Global scope-д холбож өгнө
-window.Auth = Auth;
-
-/* ----------------------------------------------------------------------
-   B) UI WIRING — index.html (Нэвтрэх / Бүртгүүлэх хуудас)
-   ---------------------------------------------------------------------- */
-function initAuthPageUI() {
-  const tabLogin = document.getElementById("tabLogin");
-  const tabRegister = document.getElementById("tabRegister");
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-
-  if (!tabLogin || !tabRegister || !loginForm || !registerForm) return;
-
-  const messageBox = document.getElementById("authMessage");
-
-  function showTab(tab) {
-    const isLogin = tab === "login";
-    tabLogin.classList.toggle("is-active", isLogin);
-    tabRegister.classList.toggle("is-active", !isLogin);
-    tabLogin.setAttribute("aria-selected", isLogin);
-    tabRegister.setAttribute("aria-selected", !isLogin);
-    loginForm.hidden = !isLogin;
-    registerForm.hidden = isLogin;
-    
-    const switchToRegisterLine = document.getElementById("switchToRegisterLine");
-    const switchToLoginLine = document.getElementById("switchToLoginLine");
-    if (switchToRegisterLine) switchToRegisterLine.hidden = !isLogin;
-    if (switchToLoginLine) switchToLoginLine.hidden = isLogin;
-    
-    clearMessage();
-  }
-
-  function showMessage(text, kind = "error") {
-    if (!messageBox) return;
-    messageBox.textContent = text;
-    messageBox.hidden = false;
-    messageBox.className = `auth-message auth-message--${kind}`;
-  }
-
-  function clearMessage() {
-    if (!messageBox) return;
-    messageBox.hidden = true;
-    messageBox.textContent = "";
-  }
-
-  tabLogin.addEventListener("click", () => showTab("login"));
-  tabRegister.addEventListener("click", () => showTab("register"));
-  document.getElementById("switchToRegister")?.addEventListener("click", () => showTab("register"));
-  document.getElementById("switchToLogin")?.addEventListener("click", () => showTab("login"));
-
-  // ---- Нэвтрэх хэсэг ----
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearMessage();
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
-    const submitBtn = loginForm.querySelector('button[type="submit"]');
-    const originalLabel = submitBtn.textContent;
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Нэвтэрч байна…";
-    try {
-      if (!IS_SUPABASE_CONFIGURED) {
-        if (!localStorage.getItem("smartclass_user_name")) {
-          const derivedName = email
-            .split("@")[0]
-            .replace(/[._-]+/g, " ")
-            .replace(/\b\w/g, (c) => c.toUpperCase());
-          localStorage.setItem("smartclass_user_name", derivedName || "Хэрэглэгч");
+export class Auth {
+    /**
+     * Одоогийн хэрэглэгчийн мэдээллийг авах
+     * @returns {Promise<Object|null>} Хэрэглэгчийн мэдээлэл эсвэл null
+     */
+    static async getCurrentUser() {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error) throw error;
+            return user;
+        } catch (error) {
+            console.error('Auth getCurrentUser error:', error.message);
+            return null;
         }
-        localStorage.setItem("smartclass_user_role", "student");
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      } else {
-        await Auth.signIn(email, password);
-      }
-
-      window.location.href = "dashboard.html";
-
-    } catch (err) {
-      showMessage(err?.message || "Нэвтрэхэд алдаа гарлаа. Имэйл, нууц үгээ шалгаад дахин оролдоно уу.", "error");
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalLabel;
-    }
-  });
-
-  // ---- Бүртгүүлэх хэсэг ----
-  registerForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearMessage();
-    const fullName = document.getElementById("registerName").value.trim();
-    const email = document.getElementById("registerEmail").value.trim();
-    const password = document.getElementById("registerPassword").value;
-    const confirmPassword = document.getElementById("registerConfirm").value;
-    const submitBtn = registerForm.querySelector('button[type="submit"]');
-    const originalLabel = submitBtn.textContent;
-
-    if (password !== confirmPassword) {
-      showMessage("Нууц үг таарахгүй байна.", "error");
-      return;
-    }
-    if (password.length < 6) {
-      showMessage("Нууц үг дор хаяж 6 тэмдэгт байх ёстой.", "error");
-      return;
     }
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Бүртгэж байна…";
-    try {
-      if (!IS_SUPABASE_CONFIGURED) {
-        localStorage.setItem("smartclass_user_name", fullName);
-        localStorage.setItem("smartclass_user_role", "student");
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        
-        window.location.href = "dashboard.html";
-        return;
-      }
-      await Auth.signUp(email, password, fullName, "student");
-      showMessage("Бүртгэл амжилттай үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.", "success");
-      showTab("login");
-    } catch (err) {
-      showMessage(err?.message || "Бүртгүүлэхэд алдаа гарлаа. Дахин оролдоно уу.", "error");
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalLabel;
+    /**
+     * Одоогийн сессийг авах
+     * @returns {Promise<Object|null>} Сессийн мэдээлэл эсвэл null
+     */
+    static async getSession() {
+        try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) throw error;
+            return session;
+        } catch (error) {
+            console.error('Auth getSession error:', error.message);
+            return null;
+        }
     }
-  });
+
+    /**
+     * Имэйл, нууц үгээр нэвтрэх
+     * @param {string} email - Хэрэглэгчийн имэйл
+     * @param {string} password - Нууц үг
+     * @returns {Promise<Object>} { user, session, error }
+     */
+    static async signIn(email, password) {
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email.trim(),
+                password: password
+            });
+
+            if (error) {
+                return { user: null, session: null, error: error.message };
+            }
+
+            return { 
+                user: data.user, 
+                session: data.session, 
+                error: null 
+            };
+        } catch (error) {
+            console.error('Auth signIn error:', error);
+            return { user: null, session: null, error: error.message };
+        }
+    }
+
+    /**
+     * Шинэ хэрэглэгч бүртгүүлэх
+     * @param {string} email - Хэрэглэгчийн имэйл
+     * @param {string} password - Нууц үг
+     * @param {Object} metadata - Нэмэлт мэдээлэл (full_name, role гэх мэт)
+     * @returns {Promise<Object>} { user, session, error }
+     */
+    static async signUp(email, password, metadata = {}) {
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email: email.trim(),
+                password: password,
+                options: {
+                    data: {
+                        full_name: metadata.full_name || '',
+                        role: metadata.role || 'student',
+                        ...metadata
+                    }
+                }
+            });
+
+            if (error) {
+                return { user: null, session: null, error: error.message };
+            }
+
+            return { 
+                user: data.user, 
+                session: data.session, 
+                error: null 
+            };
+        } catch (error) {
+            console.error('Auth signUp error:', error);
+            return { user: null, session: null, error: error.message };
+        }
+    }
+
+    /**
+     * Системээс гарах
+     * @returns {Promise<Object>} { error }
+     */
+    static async signOut() {
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+            return { error: null };
+        } catch (error) {
+            console.error('Auth signOut error:', error.message);
+            return { error: error.message };
+        }
+    }
+
+    /**
+     * Нууц үг солих хүсэлт илгээх
+     * @param {string} email - Хэрэглэгчийн имэйл
+     * @returns {Promise<Object>} { error }
+     */
+    static async resetPassword(email) {
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                redirectTo: window.location.origin + '/reset-password.html'
+            });
+            if (error) throw error;
+            return { error: null };
+        } catch (error) {
+            console.error('Auth resetPassword error:', error.message);
+            return { error: error.message };
+        }
+    }
+
+    /**
+     * Нууц үг шинэчлэх
+     * @param {string} newPassword - Шинэ нууц үг
+     * @returns {Promise<Object>} { error }
+     */
+    static async updatePassword(newPassword) {
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: newPassword
+            });
+            if (error) throw error;
+            return { error: null };
+        } catch (error) {
+            console.error('Auth updatePassword error:', error.message);
+            return { error: error.message };
+        }
+    }
+
+    /**
+     * Хэрэглэгчийн профайлыг шинэчлэх
+     * @param {Object} updates - Шинэчлэх өгөгдөл
+     * @returns {Promise<Object>} { user, error }
+     */
+    static async updateProfile(updates) {
+        try {
+            const { data, error } = await supabase.auth.updateUser({
+                data: updates
+            });
+            if (error) throw error;
+            return { user: data.user, error: null };
+        } catch (error) {
+            console.error('Auth updateProfile error:', error.message);
+            return { user: null, error: error.message };
+        }
+    }
+
+    /**
+     * Хэрэглэгч нэвтэрсэн эсэхийг шалгах (Guard)
+     * @param {string} redirectUrl - Нэвтрээгүй үед чиглүүлэх URL
+     * @returns {Promise<boolean>} Нэвтэрсэн эсэх
+     */
+    static async requireAuth(redirectUrl = '/login.html') {
+        const session = await this.getSession();
+        if (!session) {
+            window.location.href = redirectUrl;
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Багш эрхтэй эсэхийг шалгах (Guard)
+     * @param {string} redirectUrl - Эрхгүй үед чиглүүлэх URL
+     * @returns {Promise<boolean>} Багш эсэх
+     */
+    static async requireTeacher(redirectUrl = '/dashboard.html') {
+        const user = await this.getCurrentUser();
+        if (!user) {
+            window.location.href = '/login.html';
+            return false;
+        }
+        const role = user.user_metadata?.role || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+            window.location.href = redirectUrl;
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Хэрэглэгчийн үүргийг авах
+     * @returns {Promise<string>} 'teacher', 'student', 'admin' эсвэл 'guest'
+     */
+    static async getRole() {
+        const user = await this.getCurrentUser();
+        if (!user) return 'guest';
+        return user.user_metadata?.role || 'student';
+    }
+
+    /**
+     * Хэрэглэгчийн бүтэн нэрийг авах
+     * @returns {Promise<string>} Бүтэн нэр эсвэл имэйл
+     */
+    static async getDisplayName() {
+        const user = await this.getCurrentUser();
+        if (!user) return 'Зочин';
+        return user.user_metadata?.full_name || user.email?.split('@')[0] || 'Хэрэглэгч';
+    }
 }
 
-/* ----------------------------------------------------------------------
-   C) UI WIRING — dashboard.html (Гарах товч)
-   ---------------------------------------------------------------------- */
-function initDashboardAuthUI() {
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (!logoutBtn) return;
-
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      if (IS_SUPABASE_CONFIGURED) await Auth.signOut();
-      localStorage.removeItem("smartclass_user_name");
-      localStorage.removeItem("smartclass_user_role");
-      if (typeof window.showToast === "function") window.showToast("Системээс гарлаа");
-    } catch (err) {
-      console.error("[SmartClass] Гарахад алдаа гарлаа:", err);
-    } finally {
-      window.location.href = "index.html";
-    }
-  });
-}
-
-// Эхлүүлэх event listener
-document.addEventListener("DOMContentLoaded", () => {
-  initAuthPageUI();
-  initDashboardAuthUI();
-});
+// Export default
+export default Auth;
