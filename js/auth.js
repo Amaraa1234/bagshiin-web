@@ -72,34 +72,38 @@ export class Auth {
      * @param {Object} metadata - Нэмэлт мэдээлэл (full_name, role гэх мэт)
      * @returns {Promise<Object>} { user, session, error }
      */
-    static async signUp(email, password, metadata = {}) {
-        try {
-            const { data, error } = await supabase.auth.signUp({
-                email: email.trim(),
-                password: password,
-                options: {
-                    data: {
-                        full_name: metadata.full_name || '',
-                        role: metadata.role || 'student',
-                        ...metadata
-                    }
-                }
-            });
-
-            if (error) {
-                return { user: null, session: null, error: error.message };
+   // auth.js - signUp функц
+static async signUp(email, password, metadata = {}) {
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email.trim(),
+            password: password,
+            options: {
+                data: {
+                    full_name: metadata.full_name || '',
+                    role: metadata.role || 'student',
+                    grade: metadata.grade || '',
+                    subject: metadata.subject || '',
+                    ...metadata
+                },
+                emailRedirectTo: window.location.origin + '/index.html'
             }
+        });
 
-            return { 
-                user: data.user, 
-                session: data.session, 
-                error: null 
-            };
-        } catch (error) {
-            console.error('Auth signUp error:', error);
+        if (error) {
             return { user: null, session: null, error: error.message };
         }
+
+        return { 
+            user: data.user, 
+            session: data.session, 
+            error: null 
+        };
+    } catch (error) {
+        console.error('Auth signUp error:', error);
+        return { user: null, session: null, error: error.message };
     }
+}
 
     /**
      * Системээс гарах

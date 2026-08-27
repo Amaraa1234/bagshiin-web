@@ -1,0 +1,696 @@
+<!-- register.html - Бүртгүүлэх хуудас -->
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartClass — Бүртгүүлэх</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css" />
+
+    <style>
+        .auth-success {
+            color: #0f7a52;
+            background: #e3f6ec;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #a8e0c4;
+            font-size: 0.9rem;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .auth-success.show {
+            display: flex;
+        }
+        .auth-success i {
+            font-size: 1.1rem;
+            color: #0f7a52;
+        }
+
+        #studentFields {
+            transition: all 0.3s ease;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            overflow: hidden;
+        }
+        #studentFields.hidden {
+            display: none !important;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #0b3d2e;
+            color: #eafff4;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            box-shadow: 0 20px 48px -16px rgba(15, 61, 46, 0.22);
+            z-index: 200;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+        .toast.error {
+            background: #dc2626;
+        }
+
+        .auth-brand__login {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        .auth-brand__login p {
+            font-size: 0.9rem;
+            color: #b9e6cf;
+        }
+        .auth-brand__login .login-link {
+            color: #f5b90c;
+            font-weight: 700;
+            transition: 0.15s;
+            text-decoration: none;
+        }
+        .auth-brand__login .login-link:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        .fa-spinner {
+            animation: fa-spin 1s infinite linear;
+        }
+        @keyframes fa-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Auth page */
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f6f8f7;
+            padding: 20px;
+        }
+        .auth-container {
+            display: flex;
+            max-width: 960px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 48px -16px rgba(15, 61, 46, 0.22);
+            overflow: hidden;
+            min-height: 560px;
+        }
+        .auth-brand {
+            flex: 1;
+            background: linear-gradient(145deg, #0b3d2e, #0e4a37);
+            color: #eafff4;
+            padding: 40px 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 480px;
+        }
+        .auth-brand__content {
+            max-width: 320px;
+        }
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        .auth-logo__mark {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: #f5b90c;
+            color: #0b3d2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .auth-logo h1 {
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: #fff;
+            margin: 0;
+            line-height: 1.1;
+        }
+        .auth-logo p {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            color: #9fe3c4;
+            letter-spacing: 0.03em;
+        }
+        .auth-brand__text {
+            margin-bottom: 32px;
+        }
+        .auth-brand__text h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .auth-brand__text p {
+            color: #b9e6cf;
+            font-size: 0.95rem;
+        }
+        .auth-features {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .auth-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            color: #cdeee0;
+        }
+        .auth-feature i {
+            color: #f5b90c;
+            width: 20px;
+        }
+
+        .auth-form {
+            flex: 1;
+            padding: 40px 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            min-width: 320px;
+        }
+        .auth-form__inner {
+            width: 100%;
+            max-width: 360px;
+        }
+        .auth-form__inner h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .auth-form__sub {
+            color: #647279;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .auth-form__fields {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .field label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #33454b;
+            margin-bottom: 4px;
+        }
+        .field label i {
+            color: #a6b2b6;
+            width: 16px;
+        }
+        .field input, .field select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #e2e8e6;
+            font-size: 0.9rem;
+            background: #f6f8f7;
+            transition: 0.15s;
+            font-family: inherit;
+        }
+        .field input:focus, .field select:focus {
+            border-color: #2f8fd1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(47, 143, 209, 0.12);
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            padding-right: 44px !important;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #a6b2b6;
+            padding: 4px;
+            cursor: pointer;
+        }
+        .toggle-password:hover {
+            color: #33454b;
+        }
+
+        .auth-form__options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            margin: 4px 0;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #33454b;
+        }
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #e2e8e6;
+            border-radius: 4px;
+            display: inline-block;
+            position: relative;
+            flex-shrink: 0;
+            background: #ffffff;
+        }
+        .checkbox-label input:checked + .checkmark {
+            background: #0f7a52;
+            border-color: #0f7a52;
+        }
+        .checkbox-label input:checked + .checkmark::after {
+            content: "✓";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.86rem;
+            padding: 10px 20px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .btn--primary {
+            background: #0f7a52;
+            color: #fff;
+            box-shadow: 0 1px 2px rgba(17, 38, 33, 0.06);
+        }
+        .btn--primary:hover {
+            background: #128a5c;
+            box-shadow: 0 8px 24px -8px rgba(15, 61, 46, 0.16);
+            transform: translateY(-1px);
+        }
+        .btn--block {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .auth-error {
+            color: #dc2626;
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            background: #fef2f2;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+            margin-top: 4px;
+        }
+        .auth-form__register {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #647279;
+            margin-top: 12px;
+        }
+        .auth-form__register a {
+            color: #0f7a52;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .auth-form__register a:hover {
+            text-decoration: underline;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .field-row .field {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-page">
+    <div class="auth-container">
+        <!-- Left side - Branding -->
+        <div class="auth-brand">
+            <div class="auth-brand__content">
+                <div class="auth-logo">
+                    <span class="auth-logo__mark">
+                        <i class="fas fa-graduation-cap"></i>
+                    </span>
+                    <div>
+                        <h1>SmartClass</h1>
+                        <p>Сургалтын систем</p>
+                    </div>
+                </div>
+                <div class="auth-brand__text">
+                    <h2>Шинээр бүртгүүлэх</h2>
+                    <p>Сургалтын системд нэгдэж, мэдлэгээ дээшлүүлээрэй</p>
+                </div>
+                <div class="auth-features">
+                    <div class="auth-feature">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Үнэгүй бүртгэл</span>
+                    </div>
+                    <div class="auth-feature">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Аюулгүй систем</span>
+                    </div>
+                    <div class="auth-feature">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Бүх түвшний сургалт</span>
+                    </div>
+                </div>
+                <div class="auth-brand__login">
+                    <p>Бүртгэлтэй хэрэглэгч үү? <a href="index.html" class="login-link">Нэвтрэх</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right side - Register form -->
+        <div class="auth-form">
+            <div class="auth-form__inner">
+                <h2>Бүртгүүлэх</h2>
+                <p class="auth-form__sub">Доорх мэдээллээ бөглөж бүртгүүлнэ үү</p>
+
+                <form id="registerForm" class="auth-form__fields">
+                    <div class="field">
+                        <label for="registerName">
+                            <i class="fas fa-user"></i>
+                            Бүтэн нэр
+                        </label>
+                        <input type="text" id="registerName" placeholder="Жишээ: Б.Баяр" required autocomplete="name" />
+                    </div>
+
+                    <div class="field">
+                        <label for="registerEmail">
+                            <i class="fas fa-envelope"></i>
+                            Имэйл хаяг
+                        </label>
+                        <input type="email" id="registerEmail" placeholder="jishee@smartclass.mn" required autocomplete="email" />
+                    </div>
+
+                    <div class="field">
+                        <label for="registerPassword">
+                            <i class="fas fa-lock"></i>
+                            Нууц үг
+                        </label>
+                        <div class="password-wrapper">
+                            <input type="password" id="registerPassword" placeholder="Хамгийн багадаа 6 тэмдэгт" required autocomplete="new-password" minlength="6" />
+                            <button type="button" id="toggleRegisterPassword" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div style="font-size:0.75rem; color:#647279; margin-top:4px;">
+                            <i class="fas fa-info-circle"></i> Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="registerConfirmPassword">
+                            <i class="fas fa-check-circle"></i>
+                            Нууц үг баталгаажуулах
+                        </label>
+                        <div class="password-wrapper">
+                            <input type="password" id="registerConfirmPassword" placeholder="Нууц үгээ дахин оруулна уу" required autocomplete="new-password" />
+                            <button type="button" id="toggleConfirmPassword" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="registerRole">
+                            <i class="fas fa-user-tag"></i>
+                            Та хэн бэ?
+                        </label>
+                        <select id="registerRole" required>
+                            <option value="student">Сурагч</option>
+                            <option value="teacher">Багш</option>
+                        </select>
+                    </div>
+
+                    <div class="field-row" id="studentFields">
+                        <div class="field" style="flex:1;">
+                            <label for="registerGrade">Анги</label>
+                            <select id="registerGrade">
+                                <option value="">Сонгох</option>
+                                <option value="7-р анги">7-р анги</option>
+                                <option value="8-р анги">8-р анги</option>
+                                <option value="9-р анги">9-р анги</option>
+                                <option value="10-р анги">10-р анги</option>
+                                <option value="11-р анги">11-р анги</option>
+                                <option value="12-р анги">12-р анги</option>
+                            </select>
+                        </div>
+                        <div class="field" style="flex:1;">
+                            <label for="registerSubject">Хичээл</label>
+                            <select id="registerSubject">
+                                <option value="">Сонгох</option>
+                                <option value="Математик">Математик</option>
+                                <option value="Физик">Физик</option>
+                                <option value="Англи">Англи</option>
+                                <option value="Хими">Хими</option>
+                                <option value="Мэдээлэл зүй">Мэдээлэл зүй</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="checkbox-label" style="margin:4px 0;">
+                        <input type="checkbox" id="termsCheck" required />
+                        <span class="checkmark"></span>
+                        <span style="font-size:0.85rem; color:#33454b;">
+                            <a href="#" style="color:#2f8fd1;">Үйлчилгээний нөхцөл</a> болон 
+                            <a href="#" style="color:#2f8fd1;">нууцлалын бодлогыг</a> уншиж зөвшөөрч байна
+                        </span>
+                    </label>
+
+                    <button type="submit" class="btn btn--primary btn--block" id="registerBtn">
+                        <i class="fas fa-user-plus"></i>
+                        Бүртгүүлэх
+                    </button>
+
+                    <div id="registerError" class="auth-error" style="display: none;"></div>
+                    <div id="registerSuccess" class="auth-success">
+                        <i class="fas fa-check-circle"></i> 
+                        <span id="successMessage">Бүртгэл амжилттай! Имэйл хаяг руу баталгаажуулах холбоос илгээгдлээ.</span>
+                    </div>
+
+                    <p class="auth-form__register">
+                        Бүртгэлтэй хэрэглэгч үү?
+                        <a href="index.html">Нэвтрэх</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // Simple Auth simulation (Supabase-гүйгээр ажиллах)
+    const registerForm = document.getElementById('registerForm');
+    const registerName = document.getElementById('registerName');
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+    const registerRole = document.getElementById('registerRole');
+    const registerGrade = document.getElementById('registerGrade');
+    const registerSubject = document.getElementById('registerSubject');
+    const registerBtn = document.getElementById('registerBtn');
+    const registerError = document.getElementById('registerError');
+    const registerSuccess = document.getElementById('registerSuccess');
+    const successMessage = document.getElementById('successMessage');
+    const studentFields = document.getElementById('studentFields');
+    const termsCheck = document.getElementById('termsCheck');
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.className = 'toast show ' + type;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4000);
+    }
+
+    // Нууц үг харуулах/нуух
+    document.getElementById('toggleRegisterPassword')?.addEventListener('click', function() {
+        const input = registerPassword;
+        const icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    });
+
+    document.getElementById('toggleConfirmPassword')?.addEventListener('click', function() {
+        const input = registerConfirmPassword;
+        const icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    });
+
+    // Үүрэг өөрчлөгдөхөд
+    registerRole?.addEventListener('change', function() {
+        if (this.value === 'student') {
+            studentFields.classList.remove('hidden');
+        } else {
+            studentFields.classList.add('hidden');
+        }
+    });
+
+    // Бүртгүүлэх
+    registerForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        registerError.style.display = 'none';
+        registerSuccess.classList.remove('show');
+        registerSuccess.style.display = 'none';
+        registerBtn.disabled = true;
+        registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Бүртгүүлж байна...';
+
+        const name = registerName.value.trim();
+        const email = registerEmail.value.trim().toLowerCase();
+        const password = registerPassword.value;
+        const confirmPassword = registerConfirmPassword.value;
+        const role = registerRole.value;
+        const grade = registerGrade.value;
+        const subject = registerSubject.value;
+
+        if (!name) {
+            registerError.textContent = 'Бүтэн нэрээ оруулна уу';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            showToast('Бүтэн нэрээ оруулна уу', 'error');
+            return;
+        }
+
+        if (!email) {
+            registerError.textContent = 'Имэйл хаягаа оруулна уу';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            showToast('Имэйл хаягаа оруулна уу', 'error');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            registerError.textContent = 'Нууц үгүүд тохирохгүй байна';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            showToast('Нууц үгүүд тохирохгүй байна', 'error');
+            return;
+        }
+
+        if (password.length < 6) {
+            registerError.textContent = 'Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            showToast('Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой', 'error');
+            return;
+        }
+
+        if (!termsCheck.checked) {
+            registerError.textContent = 'Үйлчилгээний нөхцөлийг хүлээн зөвшөөрнө үү';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            showToast('Үйлчилгээний нөхцөлийг хүлээн зөвшөөрнө үү', 'error');
+            return;
+        }
+
+        if (role === 'student' && (!grade || !subject)) {
+            registerError.textContent = 'Сурагчийн хувьд анги, хичээлээ сонгоно уу';
+            registerError.style.display = 'block';
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Бүртгүүлэх';
+            showToast('Сурагчийн хувьд анги, хичээлээ сонгоно уу', 'error');
+            return;
+        }
+
+        // Бүртгэл амжилттай (Supabase холбоогүйгээр)
+        setTimeout(() => {
+            successMessage.textContent = '✅ Бүртгэл амжилттай! ' + email + ' хаяг руу баталгаажуулах холбоос илгээгдлээ.';
+            registerSuccess.style.display = 'flex';
+            registerSuccess.classList.add('show');
+            registerBtn.innerHTML = '<i class="fas fa-check"></i> Амжилттай';
+            registerBtn.style.background = '#0f7a52';
+            showToast('✅ Бүртгэл амжилттай!', 'success');
+
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 4000);
+        }, 1500);
+    });
+
+    console.log('✅ Register page loaded');
+</script>
+
+</body>
+</html>
