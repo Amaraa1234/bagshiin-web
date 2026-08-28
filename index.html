@@ -99,15 +99,6 @@
                         </div>
                     </div>
 
-                    <div class="auth-form__options">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="rememberMe" />
-                            <span class="checkmark"></span>
-                            Намайг сана
-                        </label>
-                        <a href="reset-password.html" class="forgot-link">Нууц үгээ мартсан?</a>
-                    </div>
-
                     <button type="submit" class="btn btn--primary btn--block" id="loginBtn">
                         <i class="fas fa-sign-in-alt"></i>
                         Нэвтрэх
@@ -129,13 +120,13 @@
                             <span class="auth-demo__label">Багш:</span>
                             <code>teacher@smartclass.mn</code>
                             <span class="auth-demo__label">Нууц үг:</span>
-                            <code>password123</code>
+                            <code>password123Z.</code>
                         </div>
                         <div>
                             <span class="auth-demo__label">Сурагч:</span>
                             <code>student@smartclass.mn</code>
                             <span class="auth-demo__label">Нууц үг:</span>
-                            <code>password123</code>
+                            <code>password123Z.</code>
                         </div>
                     </div>
                     <button type="button" id="demoLoginBtn" class="btn btn--ghost btn--sm">
@@ -270,7 +261,7 @@
                 localStorage.removeItem('smartclass_credentials');
             }
 
-            showToast('✅ Амжилттай нэвтэрлээ!');
+            showToast('Амжилттай нэвтэрлээ!');
             
             // Dashboard руу шилжих
             setTimeout(() => {
@@ -285,7 +276,7 @@
             loginError.style.display = 'block';
             loginBtn.disabled = false;
             loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Нэвтрэх';
-            showToast('❌ Системийн алдаа', 'error');
+            showToast(' Системийн алдаа', 'error');
             return false;
         }
     }
