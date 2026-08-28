@@ -1,8 +1,13 @@
 // ============================================================
-// js/dashboard.js - Хяналтын самбарын функцууд
+// js/dashboard.js - Хяналтын самбарын статистик, график
 // ============================================================
 import { supabase } from './supabase.js';
-import Auth from './auth.js';
+
+function escapeHtml(str = '') {
+    return String(str).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
 
 /**
  * Dashboard класс - хяналтын самбарын өгөгдөл, график
@@ -13,67 +18,62 @@ export class Dashboard {
         this.stats = {};
     }
 
-    /**
-     * Самбарыг эхлүүлэх
-     */
     async init() {
-        await this.loadStats();
-        await this.loadActivities();
+        await Promise.all([
+            this.loadStats(),
+            this.loadActivities()
+        ]);
         this.setupCharts();
     }
 
     /**
      * Статистик өгөгдлийг ачаалах
+     * ⚠️ Схемд 'users' болон 'courses' table байхгүй тул
+     * тэдгээрийг 'profiles' болон 'enrollments'-оор орлуулсан.
      */
     async loadStats() {
         try {
-            // Нийт сурагчид
+            // Нийт сурагчид (profiles.role='student')
+            // ⚠️ profiles table-ийн SELECT policy бүх нэвтэрсэн
+            // хэрэглэгчид зөвшөөрөгдсөн байх ёстой (migration.sql-г үзнэ үү)
             const { count: students, error: sErr } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('*', { count: 'exact', head: true })
-                .eq('user_metadata->role', 'student');
-
+                .eq('role', 'student');
             if (sErr) throw sErr;
 
-            // Нийт хичээл
+            // Идэвхтэй элсэлт (courses table байхгүй тул ойролцоо тоо)
             const { count: courses, error: cErr } = await supabase
-                .from('courses')
-                .select('*', { count: 'exact', head: true });
-
+                .from('enrollments')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'active');
             if (cErr) throw cErr;
 
-            // Шалгах даалгавар
+            // Хийгдэж буй/хийх ёстой даалгавар
             const { count: pending, error: pErr } = await supabase
                 .from('assignments')
                 .select('*', { count: 'exact', head: true })
-                .eq('status', 'pending');
-
+                .in('status', ['todo', 'progress']);
             if (pErr) throw pErr;
 
             // Дууссан даалгавар
             const { count: completed, error: coErr } = await supabase
                 .from('assignments')
                 .select('*', { count: 'exact', head: true })
-                .eq('status', 'completed');
-
+                .eq('status', 'done');
             if (coErr) throw coErr;
 
-            // UI-д харуулах
             this.updateStats({
                 students: students || 0,
                 courses: courses || 0,
                 pending: pending || 0,
                 completed: completed || 0
             });
-
         } catch (error) {
-            console.error('Load stats error:', error);
+            console.error('Load stats error:', error.message || error);
         }
     }
 
-    /**
-     * Статистик тоог UI-д шинэчлэх
-     */
     updateStats(stats) {
         const map = {
             statStudents: stats.students,
@@ -81,16 +81,12 @@ export class Dashboard {
             statPending: stats.pending,
             statCompleted: stats.completed
         };
-
         Object.keys(map).forEach(id => {
             const el = document.getElementById(id);
             if (el) el.textContent = map[id];
         });
     }
 
-    /**
-     * Үйлдлийн түүхийг ачаалах
-     */
     async loadActivities() {
         try {
             const { data, error } = await supabase
@@ -98,43 +94,36 @@ export class Dashboard {
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(5);
-
             if (error) throw error;
             this.renderActivities(data || []);
         } catch (error) {
-            console.error('Load activities error:', error);
+            console.error('Load activities error:', error.message || error);
         }
     }
 
-    /**
-     * Үйлдлийн түүхийг харуулах
-     */
     renderActivities(activities) {
         const container = document.querySelector('.activity-feed');
         if (!container) return;
 
         if (activities.length === 0) {
-            container.innerHTML = '<li style="color:var(--ink-500);">Үйлдэл байхгүй байна</li>';
+            container.innerHTML = '<li style="color:var(--ink-500, #647279);">Үйлдэл байхгүй байна</li>';
             return;
         }
 
         container.innerHTML = activities.map(activity => `
             <li>
                 <span class="activity-feed__icon">
-                    <i class="fas fa-${this.getActivityIcon(activity.type)}"></i>
+                    <i class="fas fa-${this.getActivityIcon(activity.action_type)}"></i>
                 </span>
                 <div class="activity-feed__body">
-                    <strong>${activity.title}</strong>
-                    <p>${activity.description || ''}</p>
+                    <strong>${escapeHtml(activity.title)}</strong>
+                    <p>${escapeHtml(activity.description || '')}</p>
                 </div>
                 <span class="activity-feed__time">${this.formatTime(activity.created_at)}</span>
             </li>
         `).join('');
     }
 
-    /**
-     * Үйлдлийн төрлөөр icon авах
-     */
     getActivityIcon(type) {
         const icons = {
             'user_add': 'user-plus',
@@ -147,9 +136,6 @@ export class Dashboard {
         return icons[type] || icons.default;
     }
 
-    /**
-     * Цагийг форматлах
-     */
     formatTime(timestamp) {
         if (!timestamp) return '';
         const now = new Date();
@@ -160,20 +146,17 @@ export class Dashboard {
         if (diff < 3600) return `${Math.floor(diff / 60)} мин`;
         if (diff < 86400) return `${Math.floor(diff / 3600)} цаг`;
         if (diff < 604800) return `${Math.floor(diff / 86400)} өдөр`;
-        return time.toLocaleDateString();
+        return time.toLocaleDateString('mn-MN');
     }
 
-    /**
-     * Графикуудыг тохируулах
-     */
     setupCharts() {
-        // Энд Chart.js эсвэл өөр library ашиглан график зурах боломжтой
         this.setupBarChart();
         this.setupDoughnutChart();
     }
 
     /**
-     * Бар график
+     * ⚠️ Схемд 'monthly_activity' биш 'monthly_stats' гэж байгаа,
+     * мөн багана нь 'count' биш 'activity_count'.
      */
     async setupBarChart() {
         const canvas = document.getElementById('barChart');
@@ -181,31 +164,28 @@ export class Dashboard {
 
         try {
             const { data, error } = await supabase
-                .from('monthly_activity')
-                .select('month, count')
-                .order('month', { ascending: true });
-
+                .from('monthly_stats')
+                .select('month, activity_count')
+                .order('year', { ascending: true });
             if (error) throw error;
 
-            // Хэрэв өгөгдөл байхгүй бол жишээ өгөгдөл харуулах
-            const chartData = data && data.length > 0 ? data : [
-                { month: '1-р сар', count: 12 },
-                { month: '2-р сар', count: 19 },
-                { month: '3-р сар', count: 8 },
-                { month: '4-р сар', count: 15 },
-                { month: '5-р сар', count: 22 },
-                { month: '6-р сар', count: 18 }
-            ];
+            const chartData = data && data.length > 0
+                ? data.map(d => ({ month: d.month, count: d.activity_count }))
+                : [
+                    { month: '1-р сар', count: 12 },
+                    { month: '2-р сар', count: 19 },
+                    { month: '3-р сар', count: 8 },
+                    { month: '4-р сар', count: 15 },
+                    { month: '5-р сар', count: 22 },
+                    { month: '6-р сар', count: 18 }
+                ];
 
             this.renderBarChart(canvas, chartData);
         } catch (error) {
-            console.error('Bar chart error:', error);
+            console.error('Bar chart error:', error.message || error);
         }
     }
 
-    /**
-     * Бар график зурах
-     */
     renderBarChart(canvas, data) {
         const ctx = canvas.getContext('2d');
         const width = canvas.width || 400;
@@ -225,7 +205,6 @@ export class Dashboard {
             const barHeight = (item.count / maxValue) * chartHeight;
             const y = padding + chartHeight - barHeight;
 
-            // Бар
             const gradient = ctx.createLinearGradient(x, y, x, padding + chartHeight);
             gradient.addColorStop(0, '#0f7a52');
             gradient.addColorStop(1, '#1ba372');
@@ -234,7 +213,6 @@ export class Dashboard {
             ctx.roundRect(x, y, barWidth, barHeight, 4);
             ctx.fill();
 
-            // Label
             ctx.fillStyle = '#647279';
             ctx.font = '9px Inter, sans-serif';
             ctx.textAlign = 'center';
@@ -242,9 +220,6 @@ export class Dashboard {
         });
     }
 
-    /**
-     * Doughnut график
-     */
     async setupDoughnutChart() {
         const canvas = document.getElementById('doughnutChart');
         if (!canvas) return;
@@ -253,7 +228,6 @@ export class Dashboard {
             const { data, error } = await supabase
                 .from('category_stats')
                 .select('name, value');
-
             if (error) throw error;
 
             const chartData = data && data.length > 0 ? data : [
@@ -265,13 +239,10 @@ export class Dashboard {
 
             this.renderDoughnutChart(canvas, chartData);
         } catch (error) {
-            console.error('Doughnut chart error:', error);
+            console.error('Doughnut chart error:', error.message || error);
         }
     }
 
-    /**
-     * Doughnut график зурах
-     */
     renderDoughnutChart(canvas, data) {
         const ctx = canvas.getContext('2d');
         const centerX = canvas.width / 2;
@@ -280,17 +251,15 @@ export class Dashboard {
         const innerRadius = radius * 0.6;
 
         const colors = ['#0f7a52', '#2f8fd1', '#f5b90c', '#8b5cf6', '#ef4444'];
-        const total = data.reduce((sum, d) => sum + d.value, 0);
+        const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
 
         let startAngle = -Math.PI / 2;
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         data.forEach((item, index) => {
             const sliceAngle = (item.value / total) * 2 * Math.PI;
             const endAngle = startAngle + sliceAngle;
 
-            // Үндсэн хэсэг
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, startAngle, endAngle);
             ctx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true);
@@ -298,7 +267,6 @@ export class Dashboard {
             ctx.fillStyle = colors[index % colors.length];
             ctx.fill();
 
-            // Label
             const midAngle = startAngle + sliceAngle / 2;
             const labelRadius = (radius + innerRadius) / 2;
             const labelX = centerX + Math.cos(midAngle) * labelRadius;
@@ -317,5 +285,4 @@ export class Dashboard {
     }
 }
 
-// Export
 export default Dashboard;

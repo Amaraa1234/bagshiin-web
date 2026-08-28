@@ -1,4 +1,4 @@
-<!-- dashboard.html - Хяналтын самбар -->
+<!-- dashboard.html - Supabase-тэй бүрэн холбогдсон хувилбар -->
 <!DOCTYPE html>
 <html lang="mn">
 <head>
@@ -6,75 +6,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SmartClass — Хяналтын самбар</title>
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css" />
+
+    <style>
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 20px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: modalSlideIn 0.3s ease; }
+        @keyframes modalSlideIn { from { transform: translateY(20px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h2 { font-family: 'Manrope', sans-serif; font-size: 1.3rem; font-weight: 700; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; color: #647279; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: 0.15s; }
+        .modal-close:hover { background: #f1f5f9; color: #17262b; }
+        .modal-body { display: flex; flex-direction: column; gap: 16px; }
+        .modal-body .field textarea { min-height: 80px; resize: vertical; }
+        .modal-footer { margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end; }
+        .btn--secondary { background: #f1f5f9; color: #33454b; border: 1px solid #e2e8e6; }
+        .btn--secondary:hover { background: #e2e8e6; }
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: #0b3d2e; color: #eafff4; padding: 12px 24px; border-radius: 12px; font-size: 0.86rem; font-weight: 600; box-shadow: 0 20px 48px -16px rgba(15,61,46,0.22); z-index: 2000; opacity: 0; transition: all 0.3s ease; pointer-events: none; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+        .toast.error { background: #dc2626; }
+        .toast.success { background: #0b3d2e; }
+        .library-item { background: white; border: 1px solid #e2e8e6; border-radius: 16px; padding: 16px; transition: 0.2s; }
+        .library-item:hover { box-shadow: 0 8px 24px -8px rgba(15,61,46,0.16); transform: translateY(-2px); }
+        .library-item .icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px; }
+        .library-item .icon.ocean { background: #e6f3fb; color: #185f8c; }
+        .library-item .icon.forest { background: #e3f6ec; color: #0f7a52; }
+        .library-item .icon.sun { background: #fff3d3; color: #dc9a05; }
+        .library-item .icon.purple { background: #ede9fe; color: #7c3aed; }
+        .library-item h4 { font-size: 0.95rem; margin-bottom: 4px; }
+        .library-item p { font-size: 0.78rem; color: #647279; }
+        .library-item .actions { margin-top: 12px; display: flex; gap: 8px; }
+        .library-item .actions button { padding: 4px 12px; border-radius: 8px; border: none; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.15s; }
+        .library-item .actions .btn-view { background: #e6f3fb; color: #185f8c; }
+        .library-item .actions .btn-view:hover { background: #2f8fd1; color: white; }
+        .library-item .actions .btn-delete { background: #fef2f2; color: #dc2626; }
+        .library-item .actions .btn-delete:hover { background: #dc2626; color: white; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #647279; }
+        .empty-state i { font-size: 3rem; color: #a6b2b6; margin-bottom: 12px; }
+        .empty-state h3 { font-size: 1.1rem; margin-bottom: 4px; }
+        .video-item { background: white; border: 1px solid #e2e8e6; border-radius: 16px; overflow: hidden; transition: 0.2s; cursor: pointer; }
+        .video-item:hover { box-shadow: 0 8px 24px -8px rgba(15,61,46,0.16); transform: translateY(-2px); }
+        .video-item .thumb { height: 140px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f7a52, #2f8fd1); color: white; font-size: 2.5rem; position: relative; }
+        .video-item .thumb .duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.7); padding: 2px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .video-item .body { padding: 14px; }
+        .video-item .body .tag { display: inline-block; padding: 2px 12px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; margin-bottom: 6px; }
+        .video-item .body .tag.math { background: #e3f6ec; color: #0f7a52; }
+        .video-item .body .tag.physics { background: #e6f3fb; color: #185f8c; }
+        .video-item .body .tag.english { background: #fff3d3; color: #dc9a05; }
+        .video-item .body .tag.chemistry { background: #ede9fe; color: #7c3aed; }
+        .video-item .body h4 { font-size: 0.9rem; margin-bottom: 2px; }
+        .video-item .body p { font-size: 0.75rem; color: #647279; }
+        .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .kanban-col { background: #f8fafd; border-radius: 16px; padding: 14px; min-height: 140px; }
+        .kanban-col h3 { font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .kanban-col h3 em { font-weight: 400; font-size: 0.7rem; color: #647279; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot.ocean { background: #2f8fd1; }
+        .dot.sun { background: #f5b90c; }
+        .dot.forest { background: #0f7a52; }
+        .kanban-card { background: white; border: 1px solid #e2e8e6; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; font-size: 0.85rem; font-weight: 500; transition: 0.15s; }
+        .kanban-card:hover { border-color: #2f8fd1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .kanban-card .meta { font-size: 0.7rem; color: #647279; font-weight: 400; margin-top: 4px; }
+        .status-mini-select { width: 100%; margin-top: 8px; font-size: 0.7rem; padding: 4px 8px; border-radius: 8px; border: 1px solid #e2e8e6; background: #f8fafd; cursor: pointer; }
+        .status-select { display: flex; gap: 8px; flex-wrap: wrap; }
+        .status-select .status-option { padding: 6px 16px; border-radius: 40px; border: 2px solid #e2e8e6; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: 0.15s; background: white; }
+        .status-select .status-option:hover { border-color: #2f8fd1; }
+        .status-select .status-option.active { border-color: #0f7a52; background: #e3f6ec; color: #0f7a52; }
+        .status-select .status-option.todo.active { border-color: #185f8c; background: #e6f3fb; color: #185f8c; }
+        .status-select .status-option.progress.active { border-color: #dc9a05; background: #fff3d3; color: #dc9a05; }
+        .status-select .status-option.done.active { border-color: #0f7a52; background: #e3f6ec; color: #0f7a52; }
+        .profile-only .panel { max-width: 500px; margin: 0 auto; }
+        .file-upload-area { border: 2px dashed #e2e8e6; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; background: #fafcfb; }
+        .file-upload-area:hover { border-color: #2f8fd1; background: #f0f7fe; }
+        .file-upload-area i { font-size: 2rem; color: #a6b2b6; display: block; margin-bottom: 4px; }
+        .file-upload-area p { color: #647279; font-size: 0.85rem; }
+        .file-upload-area input[type="file"] { display: none; }
+        .file-name { color: #0f7a52; font-weight: 600; margin-top: 4px; }
+        /* --- Dashboard: charts & activity feed (self-contained, style.css-с үл хамаарна) --- */
+        .chart-row { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; gap: 16px; margin-top: 20px; }
+        .chart-panel { background: white; border: 1px solid #e2e8e6; border-radius: 16px; padding: 18px; }
+        .chart-panel .panel__head h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+        .chart-panel .panel__head em { display: block; font-weight: 400; font-size: 0.72rem; color: #647279; margin-bottom: 10px; }
+        .chart-panel canvas { max-width: 100%; display: block; margin: 0 auto; }
+        .activity-feed { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; }
+        .activity-feed li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.82rem; }
+        .activity-feed__icon { width: 28px; height: 28px; border-radius: 8px; background: #e3f6ec; color: #0f7a52; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; }
+        .activity-feed__body { flex: 1; }
+        .activity-feed__body strong { display: block; font-size: 0.82rem; }
+        .activity-feed__body p { font-size: 0.75rem; color: #647279; margin: 2px 0 0; }
+        .activity-feed__time { font-size: 0.68rem; color: #a6b2b6; white-space: nowrap; }
+        @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
 
 <div class="app-shell">
-
-    <!-- ============ SIDEBAR ============ -->
-    <aside class="sidebar" id="sidebar" aria-label="Үндсэн цэс">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar__brand">
-            <span class="brand-mark">
-                <i class="fas fa-graduation-cap"></i>
-            </span>
-            <div class="brand-text">
-                <span class="brand-name">SmartClass</span>
-                <span class="brand-sub">Сургалтын систем</span>
-            </div>
+            <span class="brand-mark"><i class="fas fa-graduation-cap"></i></span>
+            <div class="brand-text"><span class="brand-name">SmartClass</span><span class="brand-sub">Сургалтын систем</span></div>
         </div>
-
         <nav class="sidebar__nav">
-            <button class="navlink is-active" data-view="dashboard" type="button">
-                <i class="fas fa-th-large navlink__icon"></i>
-                <span class="navlink__label">Хяналтын самбар<em>Ерөнхий тойм</em></span>
-            </button>
-            <button class="navlink" data-view="library" type="button">
-                <i class="fas fa-book navlink__icon"></i>
-                <span class="navlink__label">Номын сан<em>Ном, материал</em></span>
-            </button>
-            <button class="navlink" data-view="videos" type="button">
-                <i class="fas fa-video navlink__icon"></i>
-                <span class="navlink__label">Видео хичээл<em>Бичлэг хичээлүүд</em></span>
-            </button>
-            <button class="navlink" data-view="assignments" type="button">
-                <i class="fas fa-tasks navlink__icon"></i>
-                <span class="navlink__label">Даалгавар<em>Дасгал, шалгалт</em></span>
-            </button>
+            <button class="navlink is-active" data-view="dashboard"><i class="fas fa-th-large navlink__icon"></i><span class="navlink__label">Хяналтын самбар<em>Ерөнхий тойм</em></span></button>
+            <button class="navlink" data-view="library"><i class="fas fa-book navlink__icon"></i><span class="navlink__label">Номын сан<em>Ном, материал</em></span></button>
+            <button class="navlink" data-view="videos"><i class="fas fa-video navlink__icon"></i><span class="navlink__label">Видео хичээл<em>Бичлэг хичээлүүд</em></span></button>
+            <button class="navlink" data-view="assignments"><i class="fas fa-tasks navlink__icon"></i><span class="navlink__label">Даалгавар<em>Дасгал, шалгалт</em></span></button>
         </nav>
-
         <div class="sidebar__footer">
-            <div class="rail-hint">
-                <span class="rail-dot"></span>
-                <span>Нэвтэрсэн: <strong id="railUserName">Ачаалж байна...</strong></span>
-            </div>
-            <button class="navlink navlink--ghost" type="button" id="logoutBtn">
-                <i class="fas fa-sign-out-alt navlink__icon"></i>
-                <span class="navlink__label">Гарах<em>Системээс гарах</em></span>
-            </button>
+            <div class="rail-hint"><span class="rail-dot"></span><span>Нэвтэрсэн: <strong id="railUserName">Хэрэглэгч</strong></span></div>
+            <button class="navlink navlink--ghost" id="logoutBtn"><i class="fas fa-sign-out-alt navlink__icon"></i><span class="navlink__label">Гарах<em>Системээс гарах</em></span></button>
         </div>
     </aside>
-
     <div class="sidebar-scrim" id="sidebarScrim"></div>
 
-    <!-- ============ MAIN COLUMN ============ -->
+    <!-- MAIN -->
     <div class="main-col">
-
-        <!-- ============ TOPBAR ============ -->
         <header class="topbar">
-            <button class="topbar__burger" id="burgerBtn" aria-label="Цэс нээх/хаах" type="button">
-                <i class="fas fa-bars"></i>
-            </button>
-
+            <button class="topbar__burger" id="burgerBtn"><i class="fas fa-bars"></i></button>
             <div class="search-wrapper">
                 <label class="searchbar">
                     <i class="fas fa-search" style="color: var(--ink-300);"></i>
@@ -83,393 +136,801 @@
                 </label>
                 <div id="searchResultsDropdown" class="search-results-dropdown"></div>
             </div>
-
             <div class="topbar__actions">
-                <button class="icon-btn" type="button" aria-label="Мэдэгдэл" id="notifBtn">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge" id="notifBadge">3</span>
-                </button>
+                <button class="icon-btn" type="button"><i class="fas fa-bell"></i><span class="badge">3</span></button>
                 <div class="profile-chip">
-                    <span class="avatar" id="userAvatar">СА</span>
+                    <span class="avatar" id="userAvatar">Х</span>
                     <div class="profile-chip__text">
-                        <strong id="topbarUserName">Ачаалж байна...</strong>
-                        <em id="userRoleLabel">Багш</em>
+                        <strong id="topbarUserName">Хэрэглэгч</strong>
+                        <em id="userRoleLabel">Сурагч</em>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- ============ VIEWS ============ -->
         <main class="views">
-
-            <!-- ---------- DASHBOARD ---------- -->
-            <section class="view is-active" data-view="dashboard" aria-labelledby="dashTitle">
+            <!-- DASHBOARD -->
+            <section class="view is-active" data-view="dashboard">
                 <div class="view__head">
-                    <h1 id="dashTitle">Өдрийн мэнд, <span id="greetName">Ачаалж байна...</span> <em>Өнөөдрийн тойм</em></h1>
+                    <h1 id="dashTitle">Өдрийн мэнд, <span id="greetName">Хэрэглэгч</span> <em>Өнөөдрийн тойм</em></h1>
                 </div>
-
-                <!-- Stat cards -->
                 <div class="stat-grid">
                     <div class="stat-card" style="--tint: #e3f6ec; --tint-ink: #0f7a52;">
                         <div class="stat-card__icon"><i class="fas fa-users"></i></div>
-                        <div class="stat-card__value" id="statStudents">-</div>
+                        <div class="stat-card__value" id="statStudents">0</div>
                         <div class="stat-card__label">Нийт сурагч</div>
                     </div>
                     <div class="stat-card" style="--tint: #e6f3fb; --tint-ink: #185f8c;">
                         <div class="stat-card__icon"><i class="fas fa-book-open"></i></div>
-                        <div class="stat-card__value" id="statCourses">-</div>
+                        <div class="stat-card__value" id="statCourses">0</div>
                         <div class="stat-card__label">Идэвхтэй хичээл</div>
                     </div>
                     <div class="stat-card" style="--tint: #fff3d3; --tint-ink: #dc9a05;">
                         <div class="stat-card__icon"><i class="fas fa-clock"></i></div>
-                        <div class="stat-card__value" id="statPending">-</div>
-                        <div class="stat-card__label">Шалгах даалгавар</div>
+                        <div class="stat-card__value" id="statPending">0</div>
+                        <div class="stat-card__label">Хийгдэж буй даалгавар</div>
                     </div>
                     <div class="stat-card" style="--tint: #f0f0f0; --tint-ink: #33454b;">
                         <div class="stat-card__icon"><i class="fas fa-check-circle"></i></div>
-                        <div class="stat-card__value" id="statCompleted">-</div>
+                        <div class="stat-card__value" id="statCompleted">0</div>
                         <div class="stat-card__label">Дууссан даалгавар</div>
                     </div>
                 </div>
 
-                <div class="split-grid">
-                    <!-- Profile panel -->
-                    <div class="panel">
-                        <div class="panel__head">
-                            <h2>Хувийн мэдээлэл <em>Профайл</em></h2>
-                            <span class="badge" style="position:static; background:var(--forest-100); color:var(--forest-700);" id="profileRoleBadge">Багш</span>
-                        </div>
+                <div class="chart-row">
+                    <div class="panel chart-panel">
+                        <div class="panel__head"><h2>Сарын идэвх <em>Сүүлийн 6 сар</em></h2></div>
+                        <canvas id="barChart" width="400" height="160"></canvas>
+                    </div>
+                    <div class="panel chart-panel">
+                        <div class="panel__head"><h2>Хичээлийн харьцаа <em>Ангилалаар</em></h2></div>
+                        <canvas id="doughnutChart" width="180" height="180"></canvas>
+                    </div>
+                    <div class="panel chart-panel">
+                        <div class="panel__head"><h2>Сүүлийн үйлдэл <em>Шинэ мэдээ</em></h2></div>
+                        <ul class="activity-feed"><li style="color:#647279;">Ачааллаж байна...</li></ul>
+                    </div>
+                </div>
+                <div class="profile-only">
+                    <div class="panel" style="max-width:500px; margin:0 auto;">
+                        <div class="panel__head"><h2>Хувийн мэдээлэл <em>Профайл</em></h2></div>
                         <form id="profileForm" style="display:flex; flex-direction:column; gap:14px;">
                             <div class="profile-avatar-upload">
                                 <img id="profileAvatarPreview" src="https://ui-avatars.com/api/?name=Хэрэглэгч&background=0f7a52&color=fff&size=70" alt="Профайл зураг" />
-                                <label class="btn btn--ghost btn--sm" style="cursor:pointer;">
-                                    <i class="fas fa-camera"></i> Зураг солих
+                                <label class="btn btn--ghost btn--sm" style="cursor:pointer;"><i class="fas fa-camera"></i> Зураг солих
                                     <input type="file" id="profileImageInput" accept="image/*" hidden />
                                 </label>
                             </div>
-                            <label class="field">
-                                <span>Бүтэн нэр</span>
-                                <input type="text" id="profileName" placeholder="Таны бүтэн нэр" required />
-                            </label>
+                            <label class="field"><span>Бүтэн нэр</span><input type="text" id="profileName" placeholder="Таны нэр" required /></label>
                             <div class="field-row">
-                                <label class="field" style="flex:1;">
-                                    <span>Нас</span>
-                                    <input type="number" id="profileAge" min="1" max="100" placeholder="Нас" />
-                                </label>
-                                <label class="field" style="flex:1;">
-                                    <span>Хүйс</span>
-                                    <select id="profileGender">
-                                        <option value="">Сонгох</option>
-                                        <option value="Эрэгтэй">Эрэгтэй</option>
-                                        <option value="Эмэгтэй">Эмэгтэй</option>
-                                        <option value="Бусад">Бусад</option>
-                                    </select>
+                                <label class="field" style="flex:1;"><span>Нас</span><input type="number" id="profileAge" min="1" max="100" placeholder="Нас" /></label>
+                                <label class="field" style="flex:1;"><span>Хүйс</span>
+                                    <select id="profileGender"><option value="">Сонгох</option><option value="Эрэгтэй">Эрэгтэй</option><option value="Эмэгтэй">Эмэгтэй</option><option value="Бусад">Бусад</option></select>
                                 </label>
                             </div>
-                            <label class="field">
-                                <span>Утас</span>
-                                <input type="tel" id="profilePhone" placeholder="99112233" />
-                            </label>
-                            <label class="field">
-                                <span>Имэйл</span>
-                                <input type="email" id="profileEmail" placeholder="jishee@smartclass.mn" required />
-                            </label>
-                            <button type="submit" class="btn btn--primary btn--block">
-                                <i class="fas fa-save"></i> Мэдээлэл хадгалах
-                            </button>
+                            <label class="field"><span>Утас</span><input type="tel" id="profilePhone" placeholder="99112233" /></label>
+                            <label class="field"><span>Имэйл</span><input type="email" id="profileEmail" placeholder="jishee@smartclass.mn" disabled title="Имэйл солих бол Аюулгүй байдлын тохиргооноос хийнэүү" /></label>
+                            <button type="submit" class="btn btn--primary btn--block"><i class="fas fa-save"></i> Мэдээлэл хадгалах</button>
                         </form>
                     </div>
-
-                    <!-- Activity feed -->
-                    <div class="panel">
-                        <div class="panel__head">
-                            <h2>Сүүлийн үйлдлүүд <em>Идэвх</em></h2>
-                        </div>
-                        <ul class="activity-feed" id="activityFeed">
-                            <li style="color:var(--ink-500);">Ачаалж байна...</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Charts -->
-                <div class="split-grid" style="margin-top:18px;">
-                    <div class="panel panel--chart">
-                        <div class="panel__head">
-                            <h2>Сарын идэвх <em>График</em></h2>
-                        </div>
-                        <canvas id="barChart" width="500" height="200"></canvas>
-                    </div>
-                    <div class="panel panel--chart">
-                        <div class="panel__head">
-                            <h2>Категорийн хуваарилалт <em>Диаграм</em></h2>
-                        </div>
-                        <canvas id="doughnutChart" width="400" height="200"></canvas>
-                    </div>
                 </div>
             </section>
 
-            <!-- ---------- LIBRARY ---------- -->
-            <section class="view" data-view="library" aria-labelledby="libTitle">
+            <!-- LIBRARY -->
+            <section class="view" data-view="library">
                 <div class="view__head">
                     <h1 id="libTitle">Номын сан <em>Бүх материал</em></h1>
-                    <button class="btn btn--primary" id="uploadBookBtn">
-                        <i class="fas fa-upload"></i> Материал байршуулах
-                    </button>
+                    <button class="btn btn--primary" id="uploadBookBtn"><i class="fas fa-upload"></i> Материал байршуулах</button>
                 </div>
                 <div class="filter-row">
-                    <select id="filterSubject" class="select">
-                        <option value="all">Бүх хичээл</option>
-                        <option value="math">Математик</option>
-                        <option value="physics">Физик</option>
-                        <option value="english">Англи</option>
-                        <option value="chemistry">Хими</option>
-                    </select>
-                    <select id="filterGrade" class="select">
-                        <option value="all">Бүх анги</option>
-                        <option value="9">9-р анги</option>
-                        <option value="10">10-р анги</option>
-                        <option value="11">11-р анги</option>
-                        <option value="12">12-р анги</option>
-                    </select>
-                    <span style="font-size:0.85rem; color:var(--ink-500);">
-                        <span id="libCount">0</span> материал
-                    </span>
+                    <select id="filterSubject" class="select"><option value="all">Бүх хичээл</option><option value="Математик">Математик</option><option value="Физик">Физик</option><option value="Англи">Англи</option><option value="Хими">Хими</option></select>
+                    <select id="filterGrade" class="select"><option value="all">Бүх анги</option><option value="7-р анги">7-р анги</option><option value="8-р анги">8-р анги</option><option value="9-р анги">9-р анги</option><option value="10-р анги">10-р анги</option><option value="11-р анги">11-р анги</option><option value="12-р анги">12-р анги</option></select>
+                    <span style="font-size:0.85rem; color:var(--ink-500);"><span id="libCount">0</span> материал</span>
                 </div>
-                <div class="card-grid" id="libraryGrid">
-                    <!-- JavaScript-ээр дүүргэнэ -->
-                </div>
+                <div class="card-grid" id="libraryGrid"></div>
             </section>
 
-            <!-- ---------- VIDEO LESSONS ---------- -->
-            <section class="view" data-view="videos" aria-labelledby="vidTitle">
+            <!-- VIDEOS -->
+            <section class="view" data-view="videos">
                 <div class="view__head">
-                    <div>
-                        <h1 id="vidTitle">Видео хичээл <em>Үзэх, дадлагажих</em></h1>
-                        <p class="view__sub">Тоглуулах жагсаалтаараа хичээлээ үзэж, ахицаа хянаарай.</p>
-                    </div>
-                    <button class="btn btn--primary" id="uploadVideoBtn">
-                        <i class="fas fa-upload"></i> Видео байршуулах
-                    </button>
+                    <div><h1 id="vidTitle">Видео хичээл <em>Үзэх, дадлагажих</em></h1><p class="view__sub">Тоглуулах жагсаалтаараа хичээлээ үзэж, ахицаа хянаарай.</p></div>
+                    <button class="btn btn--primary" id="uploadVideoBtn"><i class="fas fa-upload"></i> Видео байршуулах</button>
                 </div>
                 <div class="chip-row" id="playlistChips">
                     <button class="chip is-active" data-category="all">Бүгд</button>
-                    <button class="chip" data-category="math">Математик</button>
-                    <button class="chip" data-category="physics">Физик</button>
-                    <button class="chip" data-category="english">Англи</button>
-                    <button class="chip" data-category="chemistry">Хими</button>
+                    <button class="chip" data-category="Математик">Математик</button>
+                    <button class="chip" data-category="Физик">Физик</button>
+                    <button class="chip" data-category="Англи">Англи</button>
+                    <button class="chip" data-category="Хими">Хими</button>
                 </div>
-                <div class="card-grid" id="videoGrid">
-                    <!-- JavaScript-ээр дүүргэнэ -->
-                </div>
+                <div class="card-grid" id="videoGrid"></div>
             </section>
 
-            <!-- ---------- ASSIGNMENTS ---------- -->
-            <section class="view" data-view="assignments" aria-labelledby="asgTitle">
+            <!-- ASSIGNMENTS -->
+            <section class="view" data-view="assignments">
                 <div class="view__head">
-                    <div>
-                        <h1 id="asgTitle">Даалгавар ба дасгал ажил <em>Гүйцэтгэлийн жагсаалт</em></h1>
-                        <p class="view__sub" id="asgSub">Хийх ёстой, хийгдэж буй, дүгнэгдсэн ажлуудаа хянана уу.</p>
-                    </div>
-                    <button class="btn btn--primary" id="newAssignmentBtn">
-                        <i class="fas fa-plus"></i> Шинэ даалгавар
-                    </button>
+                    <div><h1 id="asgTitle">Даалгавар ба дасгал ажил <em>Гүйцэтгэлийн жагсаалт</em></h1><p class="view__sub" id="asgSub">Хийх ёстой, хийгдэж буй, дүгнэгдсэн ажлуудаа хянана уу.</p></div>
+                    <button class="btn btn--primary" id="newAssignmentBtn"><i class="fas fa-plus"></i> Шинэ даалгавар</button>
                 </div>
-
-                <div class="kanban" id="kanbanBoard">
-                    <div class="kanban__col" data-status="todo">
-                        <h3 class="kanban__title"><span class="dot dot--ocean"></span>Хийх ёстой <em>Шинэ</em></h3>
-                        <div class="kanban__list" id="col-todo"></div>
-                    </div>
-                    <div class="kanban__col" data-status="progress">
-                        <h3 class="kanban__title"><span class="dot dot--sun"></span>Хийгдэж буй <em>Явцад</em></h3>
-                        <div class="kanban__list" id="col-progress"></div>
-                    </div>
-                    <div class="kanban__col" data-status="done">
-                        <h3 class="kanban__title"><span class="dot dot--forest"></span>Дууссан <em>Дүгнэгдсэн</em></h3>
-                        <div class="kanban__list" id="col-done"></div>
-                    </div>
+                <div class="kanban">
+                    <div class="kanban-col" data-status="todo"><h3><span class="dot ocean"></span>Хийх ёстой <em>Шинэ</em></h3><div id="col-todo"></div></div>
+                    <div class="kanban-col" data-status="progress"><h3><span class="dot sun"></span>Хийгдэж буй <em>Явцад</em></h3><div id="col-progress"></div></div>
+                    <div class="kanban-col" data-status="done"><h3><span class="dot forest"></span>Дууссан <em>Дүгнэгдсэн</em></h3><div id="col-done"></div></div>
                 </div>
             </section>
-
         </main>
     </div>
 </div>
 
-<!-- ============ TOAST ============ -->
+<!-- ========== MODAL: Universal Upload (Book / Video) ========== -->
+<div class="modal-overlay" id="uploadModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="uploadModalTitle"><i class="fas fa-upload"></i> Материал байршуулах</h2>
+            <button class="modal-close" id="uploadModalClose">&times;</button>
+        </div>
+        <form id="uploadForm" class="modal-body">
+            <input type="hidden" id="uploadType" value="book" />
+            <div class="field">
+                <label for="uploadTitle">Гарчиг <span style="color:#dc2626;">*</span></label>
+                <input type="text" id="uploadTitle" placeholder="Жишээ: Математикийн товчоон" required />
+            </div>
+            <div class="field-row">
+                <div class="field" style="flex:1;">
+                    <label for="uploadSubject">Хичээл <span style="color:#dc2626;">*</span></label>
+                    <select id="uploadSubject" required>
+                        <option value="">Сонгох</option>
+                        <option value="Математик">Математик</option>
+                        <option value="Физик">Физик</option>
+                        <option value="Англи">Англи</option>
+                        <option value="Хими">Хими</option>
+                        <option value="Мэдээлэл зүй">Мэдээлэл зүй</option>
+                    </select>
+                </div>
+                <div class="field" style="flex:1;">
+                    <label for="uploadGrade">Анги <span style="color:#dc2626;">*</span></label>
+                    <select id="uploadGrade" required>
+                        <option value="">Сонгох</option>
+                        <option value="7-р анги">7-р анги</option>
+                        <option value="8-р анги">8-р анги</option>
+                        <option value="9-р анги">9-р анги</option>
+                        <option value="10-р анги">10-р анги</option>
+                        <option value="11-р анги">11-р анги</option>
+                        <option value="12-р анги">12-р анги</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label for="uploadDescription">Тайлбар</label>
+                <textarea id="uploadDescription" placeholder="Материалын талаар товч тайлбар..." rows="3"></textarea>
+            </div>
+            <div class="file-upload-area" id="fileUploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Файлаа сонгох эсвэл энд чирч буулгах</p>
+                <div class="file-name" id="fileNameDisplay"></div>
+                <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.avi,.mov,.jpg,.jpeg,.png" />
+            </div>
+            <div id="uploadError" class="auth-error" style="display:none;"></div>
+            <div id="uploadSuccess" class="auth-success" style="display:none;"><i class="fas fa-check-circle"></i> <span id="uploadSuccessMsg">Амжилттай!</span></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--secondary" id="uploadCancel">Цуцлах</button>
+                <button type="submit" class="btn btn--primary" id="uploadSubmitBtn"><i class="fas fa-upload"></i> Байршуулах</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========== MODAL: Assignment ========== -->
+<div class="modal-overlay" id="assignmentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2><i class="fas fa-plus-circle"></i> Шинэ даалгавар нэмэх</h2>
+            <button class="modal-close" id="assignmentModalClose">&times;</button>
+        </div>
+        <form id="assignmentForm" class="modal-body">
+            <div class="field"><label for="assignmentTitle">Гарчиг <span style="color:#dc2626;">*</span></label><input type="text" id="assignmentTitle" placeholder="Жишээ: Алгебрийн дасгал 1" required /></div>
+            <div class="field-row">
+                <div class="field" style="flex:1;"><label for="assignmentSubject">Хичээл <span style="color:#dc2626;">*</span></label><select id="assignmentSubject" required><option value="">Сонгох</option><option value="Математик">Математик</option><option value="Физик">Физик</option><option value="Англи">Англи</option><option value="Хими">Хими</option><option value="Мэдээлэл зүй">Мэдээлэл зүй</option></select></div>
+                <div class="field" style="flex:1;"><label for="assignmentGrade">Анги <span style="color:#dc2626;">*</span></label><select id="assignmentGrade" required><option value="">Сонгох</option><option value="7-р анги">7-р анги</option><option value="8-р анги">8-р анги</option><option value="9-р анги">9-р анги</option><option value="10-р анги">10-р анги</option><option value="11-р анги">11-р анги</option><option value="12-р анги">12-р анги</option></select></div>
+            </div>
+            <div class="field"><label for="assignmentDescription">Тайлбар</label><textarea id="assignmentDescription" placeholder="Даалгаврын талаар товч тайлбар..." rows="3"></textarea></div>
+            <div class="field">
+                <label>Статус <span style="color:#dc2626;">*</span></label>
+                <div class="status-select" id="statusSelect">
+                    <button type="button" class="status-option todo active" data-status="todo"><i class="fas fa-circle" style="color:#185f8c; font-size:0.6rem;"></i> Хийх ёстой</button>
+                    <button type="button" class="status-option progress" data-status="progress"><i class="fas fa-circle" style="color:#dc9a05; font-size:0.6rem;"></i> Хийгдэж буй</button>
+                    <button type="button" class="status-option done" data-status="done"><i class="fas fa-circle" style="color:#0f7a52; font-size:0.6rem;"></i> Дууссан</button>
+                </div>
+                <input type="hidden" id="assignmentStatus" value="todo" />
+            </div>
+            <div class="field"><label for="assignmentDueDate">Хугацаа</label><input type="date" id="assignmentDueDate" /></div>
+            <div id="assignmentError" class="auth-error" style="display:none;"></div>
+            <div id="assignmentSuccess" style="display:none; color:#0f7a52; background:#e3f6ec; padding:12px 16px; border-radius:12px; border:1px solid #a8e0c4; font-size:0.9rem;"><i class="fas fa-check-circle"></i> Даалгавар амжилттай нэмэгдлээ!</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--secondary" id="assignmentCancel">Цуцлах</button>
+                <button type="submit" class="btn btn--primary" id="assignmentSubmitBtn"><i class="fas fa-plus"></i> Даалгавар нэмэх</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<!-- ============ JAVASCRIPT ============ -->
 <script type="module">
-    import { supabase } from './js/supabase.js';
+    import { supabase, uploadFileToStorage, getSignedFileUrl, deleteFileFromStorage } from './js/supabase.js';
     import Auth from './js/auth.js';
-    import App from './js/app.js';
     import Dashboard from './js/dashboard.js';
-    import Charts from './js/charts.js';
 
-    // ----- 1. AUTH GUARD -----
-    (async function checkAuth() {
+    // ============================================================
+    // STATE
+    // ============================================================
+    let currentUser = null;
+    let currentProfile = null;
+    let libraryItems = [];
+    let videoItems = [];
+    let assignmentItems = [];
+
+    // ============================================================
+    // HELPERS
+    // ============================================================
+    function escapeHtml(str = '') {
+        return String(str).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.className = 'toast show ' + type;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.classList.remove('show'); }, 3500);
+    }
+
+    // ============================================================
+    // 0. AUTH GUARD + PROFILE LOAD
+    // ============================================================
+    async function initAuth() {
         const session = await Auth.getSession();
         if (!session) {
             window.location.href = 'index.html';
+            return false;
         }
-    })();
+        currentUser = await Auth.getCurrentUser();
+        if (!currentUser) {
+            window.location.href = 'index.html';
+            return false;
+        }
 
-    // ----- 2. APP INIT -----
-    const app = new App();
-    await app.init();
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
 
-    // ----- 3. DASHBOARD INIT -----
-    const dashboard = new Dashboard();
-    await dashboard.init();
+        if (error) console.error('Profile load error:', error.message);
+        currentProfile = profile || null;
+        return true;
+    }
 
-    // ----- 4. CHARTS -----
-    // Bar chart
-    const barData = [
-        { label: '1-р сар', value: 12 },
-        { label: '2-р сар', value: 19 },
-        { label: '3-р сар', value: 8 },
-        { label: '4-р сар', value: 15 },
-        { label: '5-р сар', value: 22 },
-        { label: '6-р сар', value: 18 }
-    ];
-    Charts.drawBarChart('barChart', barData, {
-        rounded: true,
-        colorStart: '#0f7a52',
-        colorEnd: '#1ba372'
-    });
+    // ============================================================
+    // 1. USER NAME & ROLE
+    // ============================================================
+    function setUserName() {
+        const name = currentProfile?.full_name || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Хэрэглэгч';
+        const email = currentUser.email || '';
+        const role = currentProfile?.role || currentUser.user_metadata?.role || 'student';
+        const roleLabels = { teacher: 'Багш', student: 'Сурагч', admin: 'Админ' };
 
-    // Doughnut chart
-    const doughnutData = [
-        { label: 'Математик', value: 30 },
-        { label: 'Физик', value: 25 },
-        { label: 'Англи', value: 20 },
-        { label: 'Бусад', value: 25 }
-    ];
-    Charts.drawDoughnutChart('doughnutChart', doughnutData, {
-        showLabels: true,
-        colors: ['#0f7a52', '#2f8fd1', '#f5b90c', '#8b5cf6']
-    });
+        document.getElementById('greetName').textContent = name;
+        document.getElementById('railUserName').textContent = name;
+        document.getElementById('topbarUserName').textContent = name;
+        document.getElementById('userAvatar').textContent = name.substring(0, 2).toUpperCase();
+        document.getElementById('userRoleLabel').textContent = roleLabels[role] || 'Сурагч';
+        document.getElementById('profileName').value = name;
+        document.getElementById('profileEmail').value = email;
+        document.getElementById('profilePhone').value = currentProfile?.phone || '';
+        document.getElementById('profileAge').value = currentProfile?.age || '';
+        document.getElementById('profileGender').value = currentProfile?.gender || '';
+        document.getElementById('profileAvatarPreview').src = currentProfile?.avatar_url
+            || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f7a52&color=fff&size=70`;
+    }
 
-    // ----- 5. SIDEBAR TOGGLE (mobile) -----
-    const sidebar = document.getElementById('sidebar');
-    const burgerBtn = document.getElementById('burgerBtn');
-    const scrim = document.getElementById('sidebarScrim');
+    // ============================================================
+    // 2. LIBRARY — load / render / view / delete
+    // ============================================================
+    async function loadLibrary(filterSubject = 'all', filterGrade = 'all') {
+        let query = supabase.from('library').select('*').order('created_at', { ascending: false });
+        if (filterSubject !== 'all') query = query.eq('subject', filterSubject);
+        if (filterGrade !== 'all') query = query.eq('grade', filterGrade);
 
-    burgerBtn?.addEventListener('click', () => {
-        sidebar?.classList.toggle('is-open');
-        if (scrim) scrim.style.display = sidebar?.classList.contains('is-open') ? 'block' : 'none';
-    });
+        const { data, error } = await query;
+        if (error) {
+            console.error('loadLibrary error:', error.message);
+            showToast('Материал ачаалахад алдаа гарлаа', 'error');
+            return;
+        }
+        libraryItems = data || [];
+        renderLibrary();
+    }
 
-    scrim?.addEventListener('click', () => {
-        sidebar?.classList.remove('is-open');
-        scrim.style.display = 'none';
-    });
+    function renderLibrary() {
+        const grid = document.getElementById('libraryGrid');
+        const count = document.getElementById('libCount');
+        count.textContent = libraryItems.length;
 
-    // ----- 6. NAVIGATION -----
-    document.querySelectorAll('.navlink[data-view]').forEach(link => {
-        link.addEventListener('click', function() {
-            const view = this.dataset.view;
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('is-active'));
-            const target = document.querySelector(`.view[data-view="${view}"]`);
-            if (target) target.classList.add('is-active');
-            document.querySelectorAll('.navlink[data-view]').forEach(l => l.classList.remove('is-active'));
-            this.classList.add('is-active');
-            sidebar?.classList.remove('is-open');
-            if (scrim) scrim.style.display = 'none';
-        });
-    });
-
-    // ----- 7. CHIP FILTERS (videos) -----
-    document.querySelectorAll('.chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('is-active'));
-            this.classList.add('is-active');
-            const category = this.dataset.category;
-            // Filter videos (demo)
-            const videos = document.querySelectorAll('#videoGrid .video-card');
-            videos.forEach(video => {
-                const cat = video.dataset.category || 'all';
-                video.style.display = (category === 'all' || cat === category) ? 'block' : 'none';
-            });
-            app.showToast(`🎥 "${this.textContent}" ангилал сонгогдлоо`);
-        });
-    });
-
-    // ----- 8. SEARCH -----
-    const searchInput = document.getElementById('globalSearch');
-    const clearBtn = document.getElementById('clearSearchBtn');
-    const dropdown = document.getElementById('searchResultsDropdown');
-
-    searchInput?.addEventListener('input', async (e) => {
-        const query = e.target.value.trim();
-        clearBtn.style.display = query.length > 0 ? 'block' : 'none';
-        
-        if (query.length < 2) {
-            dropdown.style.display = 'none';
+        if (libraryItems.length === 0) {
+            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-book-open"></i><h3>Материал байхгүй байна</h3><p>"Материал байршуулах" товч дээр дарж шинэ материал нэмнэ үү.</p></div>`;
             return;
         }
 
-        // Search from Supabase
+        const colors = ['ocean', 'forest', 'sun', 'purple'];
+        const icons = ['fa-file-pdf', 'fa-file-word', 'fa-file-powerpoint', 'fa-file-alt'];
+
+        grid.innerHTML = libraryItems.map((item, i) => `
+            <div class="library-item" data-id="${item.id}">
+                <div class="icon ${colors[i % colors.length]}"><i class="fas ${icons[i % icons.length]}"></i></div>
+                <h4>${escapeHtml(item.title)}</h4>
+                <p>${escapeHtml(item.subject)} · ${escapeHtml(item.grade)}</p>
+                <p style="font-size:0.7rem; color:#a6b2b6;">${escapeHtml(item.file_name || 'Файл')}</p>
+                <div class="actions">
+                    <button class="btn-view" data-path="${escapeHtml(item.file_url || '')}"><i class="fas fa-eye"></i> Үзэх</button>
+                    <button class="btn-delete" data-id="${item.id}" data-path="${escapeHtml(item.file_url || '')}"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `).join('');
+
+        document.querySelectorAll('#libraryGrid .btn-view').forEach(btn => {
+            btn.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                const path = this.dataset.path;
+                if (!path) { showToast('Файл олдсонгүй', 'error'); return; }
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                const url = await getSignedFileUrl(path);
+                this.innerHTML = originalHtml;
+                if (url) window.open(url, '_blank');
+                else showToast('Файл нээхэд алдаа гарлаа', 'error');
+            });
+        });
+
+        document.querySelectorAll('#libraryGrid .btn-delete').forEach(btn => {
+            btn.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                if (!confirm('Устгах уу?')) return;
+                const id = this.dataset.id;
+                const path = this.dataset.path;
+
+                const { error } = await supabase.from('library').delete().eq('id', id);
+                if (error) {
+                    console.error('delete library error:', error.message);
+                    showToast('Устгахад алдаа гарлаа', 'error');
+                    return;
+                }
+                if (path) await deleteFileFromStorage(path);
+                showToast('✅ Устгагдлаа');
+                loadLibrary(document.getElementById('filterSubject').value, document.getElementById('filterGrade').value);
+            });
+        });
+    }
+
+    // ============================================================
+    // 3. VIDEOS — load / render / view
+    // ============================================================
+    async function loadVideos(category = 'all') {
+        let query = supabase.from('videos').select('*').order('created_at', { ascending: false });
+        if (category !== 'all') query = query.eq('subject', category);
+
+        const { data, error } = await query;
+        if (error) {
+            console.error('loadVideos error:', error.message);
+            showToast('Видео ачаалахад алдаа гарлаа', 'error');
+            return;
+        }
+        videoItems = data || [];
+        renderVideos();
+    }
+
+    function renderVideos() {
+        const grid = document.getElementById('videoGrid');
+        if (videoItems.length === 0) {
+            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-video"></i><h3>Видео байхгүй байна</h3><p>"Видео байршуулах" товч дээр дарж шинэ видео нэмнэ үү.</p></div>`;
+            return;
+        }
+
+        const tagClasses = { 'Математик': 'math', 'Физик': 'physics', 'Англи': 'english', 'Хими': 'chemistry' };
+
+        grid.innerHTML = videoItems.map(item => `
+            <div class="video-item" data-id="${item.id}" data-path="${escapeHtml(item.video_url || '')}">
+                <div class="thumb"><i class="fas fa-play-circle"></i><span class="duration">${escapeHtml(item.duration || '10:00')}</span></div>
+                <div class="body">
+                    <span class="tag ${tagClasses[item.subject] || 'math'}">${escapeHtml(item.subject)}</span>
+                    <h4>${escapeHtml(item.title)}</h4>
+                    <p>${escapeHtml(item.teacher_name || 'Багш')} · ${escapeHtml(item.grade)}</p>
+                </div>
+            </div>
+        `).join('');
+
+        document.querySelectorAll('#videoGrid .video-item').forEach(el => {
+            el.addEventListener('click', async () => {
+                const path = el.dataset.path;
+                if (!path) { showToast('Видео олдсонгүй', 'error'); return; }
+                const url = await getSignedFileUrl(path);
+                if (url) window.open(url, '_blank');
+                else showToast('Видео нээхэд алдаа гарлаа', 'error');
+            });
+        });
+    }
+
+    // ============================================================
+    // 4. ASSIGNMENTS — load / render / status change
+    // ============================================================
+    async function loadAssignments() {
+        const { data, error } = await supabase.from('assignments').select('*').order('created_at', { ascending: false });
+        if (error) {
+            console.error('loadAssignments error:', error.message);
+            showToast('Даалгавар ачаалахад алдаа гарлаа', 'error');
+            return;
+        }
+        assignmentItems = data || [];
+        renderAssignments();
+        if (window.__dashboardInstance) window.__dashboardInstance.loadStats();
+    }
+
+    function renderAssignments() {
+        const todo = document.getElementById('col-todo');
+        const progress = document.getElementById('col-progress');
+        const done = document.getElementById('col-done');
+        todo.innerHTML = ''; progress.innerHTML = ''; done.innerHTML = '';
+
+        if (assignmentItems.length === 0) {
+            const empty = `<div style="color:#647279; font-size:0.85rem; padding:20px 0; text-align:center;"><i class="fas fa-inbox" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>Даалгавар байхгүй байна</div>`;
+            todo.innerHTML = empty; progress.innerHTML = empty; done.innerHTML = empty;
+            return;
+        }
+
+        const statusMap = { todo, progress, done };
+
+        assignmentItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'kanban-card';
+            card.innerHTML = `
+                <div><strong>${escapeHtml(item.title)}</strong></div>
+                <div class="meta">${escapeHtml(item.subject)} · ${escapeHtml(item.grade)}</div>
+                ${item.due_date ? `<div class="meta">📅 ${new Date(item.due_date).toLocaleDateString('mn-MN')}</div>` : ''}
+                <select class="status-mini-select" data-id="${item.id}">
+                    <option value="todo" ${item.status === 'todo' ? 'selected' : ''}>Хийх ёстой</option>
+                    <option value="progress" ${item.status === 'progress' ? 'selected' : ''}>Хийгдэж буй</option>
+                    <option value="done" ${item.status === 'done' ? 'selected' : ''}>Дууссан</option>
+                </select>
+            `;
+            (statusMap[item.status] || todo).appendChild(card);
+        });
+
+        document.querySelectorAll('.status-mini-select').forEach(sel => {
+            sel.addEventListener('click', e => e.stopPropagation());
+            sel.addEventListener('change', async function () {
+                const id = this.dataset.id;
+                const newStatus = this.value;
+                const { error } = await supabase.from('assignments').update({ status: newStatus }).eq('id', id);
+                if (error) {
+                    console.error('update status error:', error.message);
+                    showToast('Статус шинэчлэхэд алдаа гарлаа (эрх шалгана уу)', 'error');
+                    return;
+                }
+                showToast('✅ Статус шинэчлэгдлээ');
+                loadAssignments();
+            });
+        });
+    }
+
+    // ============================================================
+    // 6. MODAL: Universal Upload (Book / Video)
+    // ============================================================
+    const uploadModal = document.getElementById('uploadModal');
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadType = document.getElementById('uploadType');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    let selectedFile = null;
+
+    function openUploadModal(type) {
+        uploadType.value = type;
+        document.getElementById('uploadModalTitle').innerHTML = `<i class="fas fa-upload"></i> ${type === 'book' ? 'Материал' : 'Видео'} байршуулах`;
+        uploadForm.reset();
+        selectedFile = null; fileNameDisplay.textContent = '';
+        document.getElementById('uploadError').style.display = 'none';
+        document.getElementById('uploadSuccess').style.display = 'none';
+        document.getElementById('uploadSubmitBtn').disabled = false;
+        document.getElementById('uploadSubmitBtn').innerHTML = '<i class="fas fa-upload"></i> Байршуулах';
+        uploadModal.classList.add('active');
+    }
+    function closeUploadModal() { uploadModal.classList.remove('active'); }
+
+    document.getElementById('uploadBookBtn').addEventListener('click', () => openUploadModal('book'));
+    document.getElementById('uploadVideoBtn').addEventListener('click', () => openUploadModal('video'));
+    document.getElementById('uploadModalClose').addEventListener('click', closeUploadModal);
+    document.getElementById('uploadCancel').addEventListener('click', closeUploadModal);
+    uploadModal.addEventListener('click', (e) => { if (e.target === uploadModal) closeUploadModal(); });
+
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            selectedFile = e.target.files[0];
+            fileNameDisplay.textContent = '📎 ' + selectedFile.name + ' (' + (selectedFile.size / 1024 / 1024).toFixed(2) + ' MB)';
+        }
+    });
+
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('uploadTitle').value.trim();
+        const subject = document.getElementById('uploadSubject').value;
+        const grade = document.getElementById('uploadGrade').value;
+        const description = document.getElementById('uploadDescription').value.trim();
+        const type = uploadType.value;
+        const errEl = document.getElementById('uploadError');
+        const successEl = document.getElementById('uploadSuccess');
+        const submitBtn = document.getElementById('uploadSubmitBtn');
+
+        errEl.style.display = 'none'; successEl.style.display = 'none';
+        if (!title) { errEl.textContent = 'Гарчиг оруулна уу'; errEl.style.display = 'block'; return; }
+        if (!subject) { errEl.textContent = 'Хичээл сонгоно уу'; errEl.style.display = 'block'; return; }
+        if (!grade) { errEl.textContent = 'Анги сонгоно уу'; errEl.style.display = 'block'; return; }
+        if (!selectedFile) { errEl.textContent = 'Файлаа сонгоно уу'; errEl.style.display = 'block'; return; }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Байршуулж байна...';
+
         try {
-            const { data, error } = await supabase
-                .from('books')
-                .select('id, title, type')
-                .ilike('title', `%${query}%`)
-                .limit(5);
+            const storagePath = await uploadFileToStorage(selectedFile, type === 'book' ? 'library' : 'videos');
+            const fileSizeStr = (selectedFile.size / 1024 / 1024).toFixed(2) + ' MB';
 
-            if (error) throw error;
-
-            if (!data || data.length === 0) {
-                dropdown.innerHTML = '<div class="search-item" style="color:var(--ink-500);">Илэрц олдсонгүй</div>';
+            if (type === 'book') {
+                const { error } = await supabase.from('library').insert({
+                    title, subject, grade, description,
+                    file_url: storagePath,
+                    file_name: selectedFile.name,
+                    file_size: fileSizeStr,
+                    user_id: currentUser.id
+                });
+                if (error) throw error;
+                await loadLibrary(document.getElementById('filterSubject').value, document.getElementById('filterGrade').value);
             } else {
-                dropdown.innerHTML = data.map(item => `
-                    <div class="search-item" data-id="${item.id}">
-                        <i class="fas fa-${item.type === 'video' ? 'video' : 'book'}" style="color:var(--ink-300);"></i>
-                        <div class="search-item__info">
-                            <span class="search-item__title">${item.title}</span>
-                            <span class="search-item__type">${item.type || 'Ном'}</span>
-                        </div>
-                    </div>
-                `).join('');
+                const { error } = await supabase.from('videos').insert({
+                    title, subject, grade, description,
+                    video_url: storagePath,
+                    teacher_name: currentProfile?.full_name || currentUser.email,
+                    duration: '10:00',
+                    user_id: currentUser.id
+                });
+                if (error) throw error;
+                await loadVideos('all');
             }
-            dropdown.style.display = 'block';
-        } catch (error) {
-            console.error('Search error:', error);
+
+            document.getElementById('uploadSuccessMsg').textContent = `${type === 'book' ? 'Материал' : 'Видео'} амжилттай байршуулагдлаа!`;
+            successEl.style.display = 'flex';
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Амжилттай';
+            showToast(`✅ ${type === 'book' ? 'Материал' : 'Видео'} амжилттай нэмэгдлээ!`);
+            setTimeout(closeUploadModal, 1500);
+        } catch (err) {
+            console.error('Upload error:', err);
+            errEl.textContent = 'Байршуулахад алдаа гарлаа: ' + (err.message || 'Тодорхойгүй алдаа');
+            errEl.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-upload"></i> Байршуулах';
         }
     });
 
-    clearBtn?.addEventListener('click', () => {
-        searchInput.value = '';
-        clearBtn.style.display = 'none';
-        dropdown.style.display = 'none';
-        searchInput.focus();
+    // ============================================================
+    // 7. MODAL: Assignment
+    // ============================================================
+    const assignmentModal = document.getElementById('assignmentModal');
+    const assignmentForm = document.getElementById('assignmentForm');
+    const statusOptions = document.querySelectorAll('.status-option');
+    const assignmentStatus = document.getElementById('assignmentStatus');
+
+    statusOptions.forEach(opt => {
+        opt.addEventListener('click', function () {
+            statusOptions.forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+            assignmentStatus.value = this.dataset.status;
+        });
     });
 
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-wrapper')) {
-            dropdown.style.display = 'none';
+    function openAssignmentModal() {
+        assignmentForm.reset();
+        document.getElementById('assignmentError').style.display = 'none';
+        document.getElementById('assignmentSuccess').style.display = 'none';
+        document.getElementById('assignmentSubmitBtn').disabled = false;
+        document.getElementById('assignmentSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> Даалгавар нэмэх';
+        statusOptions.forEach(o => o.classList.remove('active'));
+        document.querySelector('.status-option.todo').classList.add('active');
+        assignmentStatus.value = 'todo';
+        assignmentModal.classList.add('active');
+    }
+    function closeAssignmentModal() { assignmentModal.classList.remove('active'); }
+
+    document.getElementById('newAssignmentBtn').addEventListener('click', openAssignmentModal);
+    document.getElementById('assignmentModalClose').addEventListener('click', closeAssignmentModal);
+    document.getElementById('assignmentCancel').addEventListener('click', closeAssignmentModal);
+    assignmentModal.addEventListener('click', (e) => { if (e.target === assignmentModal) closeAssignmentModal(); });
+
+    assignmentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('assignmentTitle').value.trim();
+        const subject = document.getElementById('assignmentSubject').value;
+        const grade = document.getElementById('assignmentGrade').value;
+        const status = assignmentStatus.value;
+        const errEl = document.getElementById('assignmentError');
+        const submitBtn = document.getElementById('assignmentSubmitBtn');
+
+        errEl.style.display = 'none';
+        if (!title) { errEl.textContent = 'Гарчиг оруулна уу'; errEl.style.display = 'block'; return; }
+        if (!subject) { errEl.textContent = 'Хичээл сонгоно уу'; errEl.style.display = 'block'; return; }
+        if (!grade) { errEl.textContent = 'Анги сонгоно уу'; errEl.style.display = 'block'; return; }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Нэмж байна...';
+
+        const { error } = await supabase.from('assignments').insert({
+            title, subject, grade,
+            instructions: document.getElementById('assignmentDescription').value.trim(),
+            status,
+            due_date: document.getElementById('assignmentDueDate').value || null
+        });
+
+        if (error) {
+            console.error('insert assignment error:', error.message);
+            errEl.textContent = 'Даалгавар нэмэхэд алдаа гарлаа: ' + error.message;
+            errEl.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-plus"></i> Даалгавар нэмэх';
+            return;
         }
+
+        await loadAssignments();
+        document.getElementById('assignmentSuccess').style.display = 'block';
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Амжилттай';
+        showToast('✅ Шинэ даалгавар амжилттай нэмэгдлээ!');
+        setTimeout(closeAssignmentModal, 1500);
     });
 
-    // Ctrl+K shortcut
-    document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            searchInput?.focus();
-        }
+    // ============================================================
+    // 8. FILTERS, NAV, SEARCH, PROFILE
+    // ============================================================
+    document.getElementById('filterSubject').addEventListener('change', function () {
+        loadLibrary(this.value, document.getElementById('filterGrade').value);
+    });
+    document.getElementById('filterGrade').addEventListener('change', function () {
+        loadLibrary(document.getElementById('filterSubject').value, this.value);
     });
 
-    // ----- 9. LOGOUT -----
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    document.querySelectorAll('#playlistChips .chip').forEach(chip => {
+        chip.addEventListener('click', function () {
+            document.querySelectorAll('#playlistChips .chip').forEach(c => c.classList.remove('is-active'));
+            this.classList.add('is-active');
+            loadVideos(this.dataset.category);
+        });
+    });
+
+    // Sidebar / Nav
+    const sidebar = document.getElementById('sidebar');
+    document.getElementById('burgerBtn').addEventListener('click', () => {
+        sidebar.classList.toggle('is-open');
+        document.getElementById('sidebarScrim').style.display = sidebar.classList.contains('is-open') ? 'block' : 'none';
+    });
+    document.getElementById('sidebarScrim').addEventListener('click', () => {
+        sidebar.classList.remove('is-open');
+        document.getElementById('sidebarScrim').style.display = 'none';
+    });
+    document.querySelectorAll('.navlink[data-view]').forEach(link => {
+        link.addEventListener('click', function () {
+            const view = this.dataset.view;
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('is-active'));
+            document.querySelector(`.view[data-view="${view}"]`).classList.add('is-active');
+            document.querySelectorAll('.navlink[data-view]').forEach(l => l.classList.remove('is-active'));
+            this.classList.add('is-active');
+            sidebar.classList.remove('is-open');
+            document.getElementById('sidebarScrim').style.display = 'none';
+        });
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
         await Auth.signOut();
-        app.showToast('👋 Амжилттай гарлаа');
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 500);
+        showToast('👋 Амжилттай гарлаа');
+        setTimeout(() => { window.location.href = 'index.html'; }, 500);
     });
 
-    console.log('✅ SmartClass Dashboard амжилттай ажиллаж байна!');
-</script>
+    // Profile
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const full_name = document.getElementById('profileName').value.trim() || 'Хэрэглэгч';
+        const phone = document.getElementById('profilePhone').value.trim();
+        const ageVal = document.getElementById('profileAge').value;
+        const age = ageVal ? parseInt(ageVal, 10) : null;
+        const gender = document.getElementById('profileGender').value;
+        const avatar_url = document.getElementById('profileAvatarPreview').src;
 
+        const { error } = await supabase.from('profiles').upsert({
+            user_id: currentUser.id,
+            full_name, phone, age, gender,
+            avatar_url,
+            role: currentProfile?.role || 'student'
+        }, { onConflict: 'user_id' });
+
+        if (error) {
+            console.error('profile upsert error:', error.message);
+            showToast('Профайл хадгалахад алдаа гарлаа', 'error');
+            return;
+        }
+
+        currentProfile = { ...currentProfile, full_name, phone, age, gender, avatar_url };
+        setUserName();
+        showToast('✅ Профайл хадгалагдлаа');
+    });
+
+    document.getElementById('profileImageInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        // Тайлбар: Энгийн байдлаар base64-р хадгалж байна.
+        // Хэрэглэгч олон бол avatars bucket-руу upload хийж
+        // зөвхөн замыг хадгалах нь илүү зөв (uploadFileToStorage ашиглаж болно).
+        const reader = new FileReader();
+        reader.onload = (ev) => { document.getElementById('profileAvatarPreview').src = ev.target.result; };
+        reader.readAsDataURL(file);
+    });
+
+    // Search (сүүлд ачаалагдсан кэш дээр хайна)
+    const searchInput = document.getElementById('globalSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const dropdown = document.getElementById('searchResultsDropdown');
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+        if (query.length < 2) { dropdown.style.display = 'none'; return; }
+
+        const results = [];
+        libraryItems.forEach(i => { if (i.title.toLowerCase().includes(query)) results.push({ ...i, type: 'Ном' }); });
+        videoItems.forEach(i => { if (i.title.toLowerCase().includes(query)) results.push({ ...i, type: 'Видео' }); });
+        assignmentItems.forEach(i => { if (i.title.toLowerCase().includes(query)) results.push({ ...i, type: 'Даалгавар' }); });
+
+        if (results.length === 0) {
+            dropdown.innerHTML = '<div class="search-item" style="color:#647279;">Илэрц олдсонгүй</div>';
+        } else {
+            dropdown.innerHTML = results.slice(0, 10).map(item => `
+                <div class="search-item"><i class="fas fa-${item.type === 'Видео' ? 'video' : item.type === 'Даалгавар' ? 'tasks' : 'book'}" style="color:#a6b2b6;"></i>
+                <div class="search-item__info"><span class="search-item__title">${escapeHtml(item.title)}</span><span class="search-item__type">${item.type} · ${escapeHtml(item.subject)}</span></div></div>
+            `).join('');
+        }
+        dropdown.style.display = 'block';
+    });
+    clearBtn.addEventListener('click', () => { searchInput.value = ''; clearBtn.style.display = 'none'; dropdown.style.display = 'none'; searchInput.focus(); });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.search-wrapper')) dropdown.style.display = 'none'; });
+    document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); searchInput.focus(); } });
+
+    // ============================================================
+    // 9. INIT
+    // ============================================================
+    (async function main() {
+        const ok = await initAuth();
+        if (!ok) return;
+
+        setUserName();
+
+        const dash = new Dashboard();
+        window.__dashboardInstance = dash; // assignment статус солиход дахин ачаалахад ашиглана
+
+        await Promise.all([
+            loadLibrary('all', 'all'),
+            loadVideos('all'),
+            loadAssignments(),
+            dash.init()
+        ]);
+        console.log('✅ Dashboard Supabase-тэй бүрэн холбогдож ажиллаж байна!');
+    })();
+</script>
 </body>
 </html>
