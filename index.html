@@ -1,4 +1,4 @@
-<!-- index.html - Нэвтрэх хуудас (сайжруулсан) -->
+<!-- index.html - Нэвтрэх хуудас (Бүрэн зассан хувилбар) -->
 <!DOCTYPE html>
 <html lang="mn">
 <head>
@@ -129,9 +129,14 @@
                             <code>password123Z.</code>
                         </div>
                     </div>
-                    <button type="button" id="demoLoginBtn" class="btn btn--ghost btn--sm">
-                        <i class="fas fa-rocket"></i> Демо-оор нэвтрэх
-                    </button>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button type="button" id="demoTeacherBtn" class="btn btn--ghost btn--sm">
+                            <i class="fas fa-chalkboard-teacher"></i> Багшаар
+                        </button>
+                        <button type="button" id="demoStudentBtn" class="btn btn--ghost btn--sm">
+                            <i class="fas fa-user-graduate"></i> Сурагчаар
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,7 +157,8 @@
     const loginBtn = document.getElementById('loginBtn');
     const loginError = document.getElementById('loginError');
     const togglePassword = document.getElementById('togglePassword');
-    const demoLoginBtn = document.getElementById('demoLoginBtn');
+    const demoTeacherBtn = document.getElementById('demoTeacherBtn');
+    const demoStudentBtn = document.getElementById('demoStudentBtn');
     const rememberMe = document.getElementById('rememberMe');
 
     // ============================================================
@@ -226,7 +232,7 @@
     });
 
     // ============================================================
-    // 5. Нэвтрэх функц (1 удаагийн оролдлого)
+    // 5. Нэвтрэх функц
     // ============================================================
     async function handleLogin(email, password) {
         loginError.style.display = 'none';
@@ -234,11 +240,9 @@
         loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Нэвтрэж байна...';
 
         try {
-            // 1 удаагийн нэвтрэх оролдлого
             const result = await Auth.signIn(email, password);
 
             if (result.error) {
-                // Алдаа гарсан
                 let errorMsg = result.error;
                 if (errorMsg.includes('Invalid login credentials')) {
                     errorMsg = 'Имэйл эсвэл нууц үг буруу байна. Дахин оролдоно уу.';
@@ -253,13 +257,8 @@
                 return false;
             }
 
-            // Амжилттай нэвтэрлээ
-            // Нэвтрэх мэдээллийг хадгалах
-            if (rememberMe && rememberMe.checked) {
-                saveCredentials(email, password);
-            } else {
-                localStorage.removeItem('smartclass_credentials');
-            }
+            // Амжилттай нэвтэрвэл хадгалах логикийг ажиллуулах
+            saveCredentials(email, password);
 
             showToast('Амжилттай нэвтэрлээ!');
             
@@ -276,7 +275,7 @@
             loginError.style.display = 'block';
             loginBtn.disabled = false;
             loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Нэвтрэх';
-            showToast(' Системийн алдаа', 'error');
+            showToast('Системийн алдаа', 'error');
             return false;
         }
     }
@@ -290,7 +289,6 @@
         const email = loginEmail.value.trim();
         const password = loginPassword.value;
 
-        // Хоосон эсэхийг шалгах
         if (!email) {
             loginError.textContent = 'Имэйл хаягаа оруулна уу';
             loginError.style.display = 'block';
@@ -304,7 +302,6 @@
             return;
         }
 
-        // 1 удаагийн нэвтрэх
         await handleLogin(email, password);
     });
 
@@ -326,14 +323,21 @@
     });
 
     // ============================================================
-    // 8. Демо-оор нэвтрэх
+    // 8. Демо-оор нэвтрэх (Багш болон Сурагч)
     // ============================================================
-    demoLoginBtn?.addEventListener('click', async () => {
+    demoTeacherBtn?.addEventListener('click', async () => {
         const email = 'teacher@smartclass.mn';
-        const password = 'password123';
+        const password = 'password123Z.';
         loginEmail.value = email;
         loginPassword.value = password;
-        if (rememberMe) rememberMe.checked = true;
+        await handleLogin(email, password);
+    });
+
+    demoStudentBtn?.addEventListener('click', async () => {
+        const email = 'student@smartclass.mn';
+        const password = 'password123Z.';
+        loginEmail.value = email;
+        loginPassword.value = password;
         await handleLogin(email, password);
     });
 
@@ -344,7 +348,6 @@
         try {
             const session = await Auth.getSession();
             if (session) {
-                // Хэрэглэгч аль хэдийн нэвтэрсэн
                 window.location.href = 'dashboard.html';
             }
         } catch (e) {
